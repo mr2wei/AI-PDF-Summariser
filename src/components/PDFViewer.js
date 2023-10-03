@@ -1,0 +1,115 @@
+import React, { useRef, useEffect, useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import Chat from './Chat.js';
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
+import '../styles/PDFViewer.css';
+
+export default function PDFViewer(props) {
+    const [numPages, setNumPages] = useState(null);
+    const [pageNumber, setPageNumber] = useState(1);
+    const [pageText, setPageText] = useState("");
+    const [jumpToPage, setJumpToPage] = useState("");
+    const pdfRef = useRef(null);
+    const textContainerRef = useRef(null);
+
+    useEffect(() => {
+        pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+    }, []);
+
+    const onDocumentLoadSuccess = ({ numPages }) => {
+        setNumPages(numPages);
+    };
+
+    const onPageLoadSuccess = (page) => {
+        page.getTextContent().then((textContent) => {
+            let text = "";
+            textContent.items.forEach((item) => {
+                text += item.str + " ";
+            });
+            setPageText(text);
+
+            // if (textContainerRef.current) {
+            //     textContainerRef.current.scrollIntoView();
+            // }
+            // if (textContainerRef.current) {
+            //     const containerHeight = textContainerRef.current.offsetHeight;
+            //     const pageHeight = page.view[3];
+            //     if (pageHeight !== containerHeight * 0.9) {
+            //         const scale = containerHeight*0.9 / pageHeight;
+            //         document.getElementsByClassName("pdf")[0].style.transform = `scale(${scale})`;
+            //     }
+                
+            // }
+        });
+    };
+
+    const goToPreviousPage = (event) => {
+        event.preventDefault();
+        if (pageNumber > 1) {
+            setPageNumber(pageNumber - 1);
+        }
+    };
+
+    const goToNextPage = (event) => {
+        event.preventDefault();
+        if (pageNumber < numPages) {
+            setPageNumber(pageNumber + 1);
+        }
+    };
+
+    const handleJumpToPage = (event) => {
+        event.preventDefault();
+        const page = parseInt(jumpToPage);
+        if (!isNaN(page) && page >= 1 && page <= numPages) {
+            setPageNumber(page);
+        }
+        setJumpToPage("");
+    };
+
+    return (
+        <div>
+            <div className="container">
+                <div className="pdf-container">
+                    <button className="page-indicator">Page {pageNumber} of {numPages}</button>
+                    <button onClick={goToPreviousPage} id="hoverable" disabled={pageNumber === 1}>
+                        Previous Page
+                    </button>
+                    <button onClick={goToNextPage} id="hoverable" disabled={pageNumber === numPages}>
+                        Next Page
+                    </button>
+                    <input
+                        type="text"
+                        value={jumpToPage}
+                        onChange={(e) => setJumpToPage(e.target.value)}
+                        placeholder="Jump"
+                        id="hoverable"
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                handleJumpToPage(e);
+                            }
+                        }}
+                    />
+                    <button id="hoverable" onClick={handleJumpToPage}>
+                        Go
+                    </button>
+                    <Document
+                        className="pdf"
+                        file={props.file}
+                        onLoadSuccess={onDocumentLoadSuccess}
+                        ref={pdfRef}
+                    >
+                        <Page
+                            pageNumber={pageNumber}
+                            onLoadSuccess={onPageLoadSuccess}
+                        />
+                    </Document>
+                </div>
+
+                <div className="text-container" ref={textContainerRef}>
+                    <Chat text={pageText} />
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -1,0 +1,31 @@
+.upload {
+    background-color: var(--nav-color);
+    margin: 10px 0px;
+    background-color: var(--nav-color);
+    padding: 1.5%;
+    border-radius: calc(10px + 1.1vw);
+    width: auto;
+}
+
+.upload h3 {
+    margin: 0 0 30px 0;
+}
+
+.upload input {
+    margin: 0 0 10px 0;
+    padding: 1.2% 1.5%;
+    background-color: var(--container-highlight-color);
+    font-size: calc(10px + 0.8vw);
+    color: inherit;
+    transition: all 0.2s ease-out;
+    border: 0;
+    border-radius: calc(8px + 0.3vw);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 30%;
+}
+
+.PDFViewer {
+    width: auto;
+}

@@ -1,0 +1,67 @@
+.container {
+    display: flex;
+    height: 95vh; 
+}
+
+.pdf-container {
+    flex: 1;
+    background-color: var(--nav-color);
+    margin: 10px 10px 0px 0px;
+    background-color: var(--nav-color);
+    padding: 1.5%;
+    border-radius: calc(10px + 1.1vw);
+    width: fit-content;
+}
+
+button {
+    margin: 0 1.3% 2% 0;
+    border: 0;
+    border-radius: calc(8px + 0.3vw);
+    padding: 1.2% 1.5%;
+    background-color: var(--container-highlight-color);
+    font-size: calc(9px + 0.8vw);
+    color: inherit;
+    transition: all 0.2s ease-out;
+}
+
+button:disabled {
+    opacity: 0.4;
+}
+
+.pdf-container > div {
+    width: 100%;
+    height: 100%;
+    /* transform: scale(0.94); */
+    transform-origin: top left;
+}
+
+.text-container {
+    flex: 1;
+    background-color: var(--nav-color);
+    margin: 10px 0px 0px 10px;
+    background-color: var(--nav-color);
+    padding: 1.5%;
+    border-radius: calc(10px + 1.1vw);
+    width: auto;
+}
+
+.pdf-container input {
+    margin: 0 1.3% 2% 0;
+    border: 0;
+    border-radius: calc(8px + 0.3vw);
+    padding: 1.2% 1.5%;
+    background-color: var(--container-highlight-color);
+    font-size: calc(10px + 0.8vw);
+    color: inherit;
+    transition: all 0.2s ease-out;
+    width: 10%;
+}
+
+#hoverable:hover {
+    cursor: pointer;
+    background-color: var(--button-highlight-color);
+}
+
+#hoverable {
+    user-select: none;
+}
