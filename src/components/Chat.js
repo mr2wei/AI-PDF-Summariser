@@ -28,6 +28,7 @@ export default function Chat(props){
             setIsGenerating={setIsGenerating}
             openai={openai}
             text={pageText}
+            scrollToBottom={scrollToBottom}
         />));
     };
 
@@ -72,7 +73,6 @@ export default function Chat(props){
             props.scrollRef.current.scrollIntoView({ behavior: "smooth" });
         }
         setPageText(props.text);
-        scrollToBottom(); // Scroll to bottom when page text changes
     }, [props.text, props.scrollRef]);
 
     return (
