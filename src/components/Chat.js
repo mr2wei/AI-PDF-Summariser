@@ -41,6 +41,7 @@ export default function Chat(props){
             <Message
                 isBot={false}
                 text={userMessage}
+                scrollToBottom={scrollToBottom}
             />,
             <Message
                 isBot={true}
@@ -49,11 +50,18 @@ export default function Chat(props){
                 setIsGenerating={setIsGenerating}
                 openai={openai}
                 text={pageText}
+                scrollToBottom={scrollToBottom}
             /> 
             
             ]));
     
-        setOpenaiChatHistory(updatedChatHistory);
+        setOpenaiChatHistory(updatedChatHistory); 
+    };
+
+    const scrollToBottom = () => {
+        if (messageRef.current) {
+            messageRef.current.scrollTop = messageRef.current.scrollHeight;
+        }
     };
 
     useEffect(() => {
@@ -61,14 +69,15 @@ export default function Chat(props){
             props.scrollRef.current.scrollIntoView({ behavior: "smooth" });
         }
         setPageText(props.text);
+        scrollToBottom(); // Scroll to bottom when page text changes
     }, [props.text, props.scrollRef]);
 
     return (
         <div className="chat">
-            <button 
-                className="generate" 
-                id="hoverable" 
-                disabled={!props.text || isGenerating} 
+            <button
+                className="generate"
+                id="hoverable"
+                disabled={!props.text || isGenerating}
                 onClick={handleGenerate}
             >
                 Generate
@@ -92,31 +101,31 @@ export default function Chat(props){
                             handleSendMessage(event);
                         }
                     }}
-                    disabled = {!props.text || isGenerating}
+                    disabled={!props.text || isGenerating}
                 />
                 <button
                     id="hoverable"
-                    disabled = {!props.text || isGenerating}
+                    disabled={!props.text || isGenerating}
                     onClick={() => {
                         setUsePageText(!usePageText);
                     }}
-                    className= {usePageText? "" : "no-context"}
+                    className={usePageText ? "" : "no-context"}
                 >
                     Context?
                 </button>
-                <button 
+                <button
                     id="hoverable"
-                    disabled = {!props.text || isGenerating}
+                    disabled={!props.text || isGenerating}
                     onClick={handleSendMessage}
                 >
                     Send
                 </button>
                 <button
                     id="hoverable"
-                    disabled = {chatHistory.length === 0}
+                    disabled={chatHistory.length === 0}
                     onClick={() => {
                         setChatHistory([]);
-                        setOpenaiChatHistory([{role: 'system', content: guidance}]);
+                        setOpenaiChatHistory([{ role: 'system', content: guidance }]);
                     }}
                 >
                     Clear
@@ -124,6 +133,5 @@ export default function Chat(props){
 
             </div>
         </div>
-            
     );
 }

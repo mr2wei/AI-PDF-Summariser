@@ -70,7 +70,7 @@ export default function Message(props){
                     //     <li key={index}>{point}</li>
                     // ))}
                     // </ul>);
-                    
+                    props.scrollToBottom();
                 }
                 
                 props.setIsGenerating(false);
@@ -84,6 +84,7 @@ export default function Message(props){
                         props.setMessageHistory(newMessageHistory);   
                         openaiChatHistory = newMessageHistory;
                     } else {
+                        console.log(error);
                         setTextContent("Sorry, this page is too long to read.");
                         break;
                     }
@@ -108,6 +109,7 @@ export default function Message(props){
         } else if (!props.isBot && !completed) {
             setTextContent(props.text);
             setCompleted(true);
+            props.scrollToBottom();
         }
     }, [fetchChatCompletions, completed, props.isBot, props.text]);
 
