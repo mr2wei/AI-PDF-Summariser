@@ -1,3 +1,4 @@
+import ReactResizeDetector from "react-resize-detector";
 import React, { useRef, useEffect, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import Chat from './Chat.js';
@@ -71,29 +72,45 @@ export default function PDFViewer(props) {
         <div>
             <div className="container">
                 <div className="pdf-container">
-                    <button className="page-indicator">Page {pageNumber} of {numPages}</button>
-                    <button onClick={goToPreviousPage} id="hoverable" disabled={pageNumber === 1}>
-                        Previous Page
-                    </button>
-                    <button onClick={goToNextPage} id="hoverable" disabled={pageNumber === numPages}>
-                        Next Page
-                    </button>
-                    <input
-                        type="text"
-                        value={jumpToPage}
-                        onChange={(e) => setJumpToPage(e.target.value)}
-                        placeholder="Jump"
-                        id="hoverable"
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                                handleJumpToPage(e);
-                            }
-                        }}
-                    />
-                    <button id="hoverable" onClick={handleJumpToPage}>
-                        Go
-                    </button>
-                    <Document
+                    <div className="pdf-controls">
+                        <button className="page-indicator">Page {pageNumber} of {numPages}</button>
+                        <button onClick={goToPreviousPage} id="hoverable" disabled={pageNumber === 1}>
+                            Previous Page
+                        </button>
+                        <button onClick={goToNextPage} id="hoverable" disabled={pageNumber === numPages}>
+                            Next Page
+                        </button>
+                        <input
+                            className="input-page"
+                            type="text"
+                            value={jumpToPage}
+                            onChange={(e) => setJumpToPage(e.target.value)}
+                            placeholder="Jump"
+                            id="hoverable"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    handleJumpToPage(e);
+                                }
+                            }}
+                        />
+                        <button id="hoverable" onClick={handleJumpToPage}>
+                            Go
+                        </button>
+                    </div>
+                    <div className="pdf">
+                        <ReactResizeDetector handleWidth handleHeight>
+                            {({ width, height, targetRef }) => (
+                                <div ref={targetRef}>
+                                    <Document  file={props.file} onLoadSuccess={onDocumentLoadSuccess} ref={pdfRef}>
+                                        <Page pageNumber={pageNumber} width={width} height={height} onLoadSuccess={onPageLoadSuccess} />
+                                    </Document>
+                                </div>
+                            )}
+                        </ReactResizeDetector>    
+                    </div>
+                    
+
+                    {/* <Document
                         className="pdf"
                         file={props.file}
                         onLoadSuccess={onDocumentLoadSuccess}
@@ -103,7 +120,7 @@ export default function PDFViewer(props) {
                             pageNumber={pageNumber}
                             onLoadSuccess={onPageLoadSuccess}
                         />
-                    </Document>
+                    </Document> */}
                 </div>
 
                 <div className="text-container" ref={textContainerRef}>

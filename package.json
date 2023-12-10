@@ -19,6 +19,7 @@
     "react-dom": "^18.2.0",
     "react-markdown": "^8.0.7",
     "react-pdf": "^7.3.3",
+    "react-resize-detector": "^9.1.0",
     "react-scripts": "5.0.1",
     "stream-browserify": "^3.0.0",
     "tiktoken": "^1.0.10",

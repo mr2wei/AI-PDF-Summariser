@@ -1,16 +1,20 @@
 :root {
-  --light-nav-color: #e0e3e4;
+  --light-nav-color: #e4e5e6;
   --dark-nav-color: #3b3e3f;
-  --light-nav-hover-color: #C8DED8;
+  --light-nav-hover-color: #BECEEB;
   --dark-nav-hover-color: #65706D;
-  --light-container-highlight-color : #D8F0E9;
+  --light-container-highlight-color : #BECEEB;
   --dark-container-highlight-color : #65706D;
-  --light-button-highlight-color : #C1D6D0;
+  --light-button-highlight-color : #cdbed6;
   --dark-button-highlight-color : #9EB0AB;
+  --user-message-color: #d8dbf2;
+  --light-bot-message-color: #d8dbf2;
+  --dark-bot-message-color: #65706D;
   --nav-color: var(--light-nav-color);
   --nav-hover-color: var(--light-nav-hover-color);
   --container-highlight-color: var(--light-container-highlight-color);
   --button-highlight-color: var(--light-button-highlight-color);
+  --bot-message-color: var(--light-bot-message-color);
   --dark-background-color: #313435;
   --light-background-color: #eef1f2;
 }
@@ -21,6 +25,7 @@
     --nav-hover-color: var(--dark-nav-hover-color);
     --container-highlight-color: var(--dark-container-highlight-color);
     --button-highlight-color: var(--dark-button-highlight-color);
+    --bot-message-color: var(--dark-bot-message-color);
   }
 }
 
@@ -66,7 +71,8 @@
 }
 
 #content {
-  margin-top:4vh;
+  padding-top:4vh;
+  padding-bottom: 4vh;
   margin-left: 3%;
   margin-right: 3%;
 }

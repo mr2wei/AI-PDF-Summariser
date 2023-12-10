@@ -13,11 +13,17 @@ export default function Chat(props){
     const [chatHistory, setChatHistory] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [userMessage, setUserMessage] = useState("");
-    const [openaiChatHistory, setOpenaiChatHistory] = useState([
+    const [openaiChatHistory,setOpenaiChatHistory] = useState([
         {role: 'system', content: guidance}
     ]);
     const [usePageText, setUsePageText] = useState(true);
     const messageRef = useRef(null);
+
+    const scrollToBottom = () => {
+        if (messageRef.current) {
+            messageRef.current.scrollTop = messageRef.current.scrollHeight;
+        }
+    };
 
     const handleGenerate = async () => {
         openaiChatHistory.push({role: 'user', content: `Summarise ${props.text}`});
@@ -62,12 +68,7 @@ export default function Chat(props){
 
     };
 
-    const scrollToBottom = () => {
-        if (messageRef.current) {
-            messageRef.current.scrollTop = messageRef.current.scrollHeight;
-        }
-    };
-
+   
     useEffect(() => {
         if (props.scrollRef && props.scrollRef.current) {
             props.scrollRef.current.scrollIntoView({ behavior: "smooth" });
