@@ -1,23 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
-import { OpenAI } from "openai";
 import Message from './Message.js';
-import Cookies from 'js-cookie';
 import '../styles/Chat.css';
+import GPT from '../utils/GPT.js';
 
 
 export default function Chat(props){
-    const openai = new OpenAI({ apiKey: Cookies.get('apiKey'), dangerouslyAllowBrowser: true });
-    const guidance = "Your job is to use context from text given to answer the user's requests. For summaries, Your job is to provide a neat summary of key points and information from the text. please format the response using bullet points for each key point. If the user is asking about the content, prioritise answering with information given. respond using markdown syntax";
 
+    const [model, setModel] = useState("gpt-3.5-turbo");
+
+    const gptUtils = new GPT(model);
+   
     const [pageText, setPageText] = useState("");
     const [chatHistory, setChatHistory] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [userMessage, setUserMessage] = useState("");
-    const [openaiChatHistory,setOpenaiChatHistory] = useState([
-        {role: 'system', content: guidance}
-    ]);
+    const [openaiChatHistory,setOpenaiChatHistory] = useState([]);
     const [usePageText, setUsePageText] = useState(true);
     const messageRef = useRef(null);
+
 
     const scrollToBottom = () => {
         if (messageRef.current) {
@@ -26,45 +26,55 @@ export default function Chat(props){
     };
 
     const handleGenerate = async () => {
-        openaiChatHistory.push({role: 'user', content: `Summarise ${props.text}`});
-        setChatHistory(chatHistory.concat(<Message 
+        setIsGenerating(true);
+        const { message, updatedChatHistory, stream } = await gptUtils.generateSummary(pageText);
+
+        setOpenaiChatHistory(openaiChatHistory.concat(updatedChatHistory));
+
+        setChatHistory(chatHistory.concat(<Message
             isBot={true}
-            messageHistory={[{role: 'system', content: guidance}, {role: 'user', content: `Summarise ${props.text}`}]}
-            setMessageHistory={setOpenaiChatHistory}
+            stream={stream}
+            text={message}
+            openaiChatHistory={openaiChatHistory}
+            setOpenaiChatHistory={setOpenaiChatHistory}
             setIsGenerating={setIsGenerating}
-            openai={openai}
-            text={pageText}
             scrollToBottom={scrollToBottom}
         />));
+        
     };
 
-    const handleSendMessage = (event) => {
+    const handleSendMessage = async (event) => {
         // TODO: Send message to chat history
         // if there is no chat history, add the pdf page as context
 
-        const updatedChatHistory = usePageText? openaiChatHistory.concat({ role: 'user', content: `from: ${pageText}. ${userMessage}` }) : openaiChatHistory.concat({ role: 'user', content: userMessage });
+        const userText = userMessage;
     
         setUserMessage("");
+
+        const pageContext = usePageText ? pageText : "";
+
+        setIsGenerating(true);
+
+        const { message, updatedChatHistory, stream } = await gptUtils.fetchChatCompletions(openaiChatHistory, pageContext, userText);
+
+        setOpenaiChatHistory(updatedChatHistory);
     
         setChatHistory(chatHistory.concat([
             <Message
                 isBot={false}
-                text={userMessage}
+                text={userText}
                 scrollToBottom={scrollToBottom}
             />,
             <Message
                 isBot={true}
-                messageHistory={updatedChatHistory}
-                setMessageHistory={setOpenaiChatHistory}
+                stream={stream}
+                text={message}
+                openaiChatHistory={openaiChatHistory}
+                setOpenaiChatHistory={setOpenaiChatHistory}
                 setIsGenerating={setIsGenerating}
-                openai={openai}
-                text={pageText}
                 scrollToBottom={scrollToBottom}
-            /> 
-            
-            ]));
-    
-        setOpenaiChatHistory(updatedChatHistory);
+            />
+        ]));
 
     };
 
@@ -129,8 +139,8 @@ export default function Chat(props){
                     disabled={chatHistory.length === 0}
                     onClick={() => {
                         setChatHistory([]);
-                        setOpenaiChatHistory([{ role: 'system', content: guidance }]);
-                    }}
+                        setOpenaiChatHistory([]);}
+                    }
                 >
                     Clear
                 </button>
