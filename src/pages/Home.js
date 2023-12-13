@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import OpenAI from 'openai';
 import Cookies from 'js-cookie';
-import PDFViewer from '../components/PDFViewer.js';
+import Main from '../components/Main.js';
 import '../styles/Home.css';
 
 export default function Home() {
@@ -58,7 +58,7 @@ export default function Home() {
 						<input type="file" onChange={handleFileChange} />
 					</div>
 					<div className='PDFViewer'>
-						{file && <PDFViewer file={file}/>}
+						{file && <Main file={file}/>}
 					</div>
 				</>
 			) : (
