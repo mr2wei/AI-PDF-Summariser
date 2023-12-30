@@ -6,7 +6,7 @@ import * as Tiktoken from 'js-tiktoken';
 export default class GPT {
     constructor(model) {
         this.openai = new OpenAI({ apiKey: Cookies.get('apiKey'), dangerouslyAllowBrowser: true });
-        this.guidance = "Your job is to use context from text given to answer the user's requests. For summaries, Your job is to provide a neat summary of key points and information from the text. please format the response using bullet points for each key point. If the user is asking about the content, prioritise answering with information given. Format response in HTML, HTML formatting is allowed. Use LaTeX for math.";
+        this.guidance = "Your job is to use context from text given to answer the user's requests. For summaries, Your job is to provide a neat summary of key points and information from the text. please format the response using bullet points for each key point. If the user is asking about the content, prioritise answering with information given. Format response in HTML, HTML formatting is allowed. Always use LaTeX for math.";
         this.model = model;
     }
 
@@ -21,7 +21,7 @@ export default class GPT {
      */
     getMessageTokens = async (chatHistory) => {
         // Initialize the encoder for the "gpt-3.5-turbo" model.
-        const encoder = Tiktoken.encodingForModel(this.model);
+        const encoder = Tiktoken.encodingForModel("gpt-3.5-turbo");
         // Initialize an empty array to store the tokens.
         let total_tokens = [];
         // Iterate over each message in the chat history.
@@ -77,7 +77,7 @@ export default class GPT {
         if (pageText){
             openaiChatHistory = openaiChatHistory.concat({ role: 'user', content: `from: ${pageText}. ${userMessage}.` })
         } else {
-            openaiChatHistory.concat({ role: 'user', content: userMessage });
+            openaiChatHistory = openaiChatHistory.concat({ role: 'user', content: userMessage });
         }
         let tokens;
 
@@ -105,5 +105,21 @@ export default class GPT {
             return { message, openaiChatHistory, stream: null };
         }
     }
+    /**
+     * 
+     * @param {*} model - The model to be used for generating responses.
+     */
+    setModel = (newModel) => {
+        this.model = newModel;
+    }
+
+    getSupportedModels = () => {
+        return [
+            "gpt-3.5-turbo",
+            "gpt-4",
+            "gpt-4-1106-preview"
+        ];
+    }
+
 }
 

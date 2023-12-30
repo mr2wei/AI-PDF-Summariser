@@ -1,9 +1,12 @@
 import ReactResizeDetector from "react-resize-detector";
 import React, { useRef, useEffect, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faForward, faCaretRight, faCaretLeft } from '@fortawesome/free-solid-svg-icons';
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
-import '../styles/PDFViewer.css';
+import '../styles/PDFViewer.css'
+
 
 export default function PDFViewer(props) {
     const [numPages, setNumPages] = useState(null);
@@ -69,11 +72,11 @@ export default function PDFViewer(props) {
         <div className="pdf-container">
             <div className="pdf-controls">
                 <button className="page-indicator">Page {pageNumber} of {numPages}</button>
-                <button onClick={goToPreviousPage} id="hoverable" disabled={pageNumber === 1}>
-                    Previous Page
+                <button onClick={goToPreviousPage} id="hoverable" disabled={pageNumber === 1} className="page-control">
+                    <FontAwesomeIcon icon={faCaretLeft} />
                 </button>
-                <button onClick={goToNextPage} id="hoverable" disabled={pageNumber === numPages}>
-                    Next Page
+                <button onClick={goToNextPage} id="hoverable" disabled={pageNumber === numPages} className="page-control">
+                    <FontAwesomeIcon icon={faCaretRight} />
                 </button>
                 <input
                     className="input-page"
@@ -89,7 +92,7 @@ export default function PDFViewer(props) {
                     }}
                 />
                 <button id="hoverable" onClick={handleJumpToPage}>
-                    Go
+                    <FontAwesomeIcon icon={faForward} />
                 </button>
             </div>
             <div className="pdf">

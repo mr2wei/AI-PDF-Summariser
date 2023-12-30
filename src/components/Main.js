@@ -1,6 +1,5 @@
-import ReactResizeDetector from "react-resize-detector";
-import React, { useRef, useEffect, useState } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+
+import React, { useRef, useState } from "react";
 import Chat from './Chat.js';
 import PDFViewer from './PDFViewer.js';
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
