@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import Message from './Message.js';
 import '../styles/Chat.css';
 import GPT from '../utils/GPT.js';
-
+import TextareaAutosize from 'react-textarea-autosize';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPaperPlane, faFile as faFileSolid, faTrash, faStop, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { faFile as faFileReg } from '@fortawesome/free-regular-svg-icons';
 
 export default function Chat(props){
 
@@ -16,8 +19,12 @@ export default function Chat(props){
     const [userMessage, setUserMessage] = useState("");
     const [openaiChatHistory,setOpenaiChatHistory] = useState([]);
     const [usePageText, setUsePageText] = useState(true);
+    const [animatingButton, setAnimatingButton] = useState(null);
+
+  
     const messageRef = useRef(null);
 
+    const supportedModels = gptUtils.getSupportedModels();
 
     const scrollToBottom = () => {
         if (messageRef.current) {
@@ -47,9 +54,19 @@ export default function Chat(props){
         // TODO: Send message to chat history
         // if there is no chat history, add the pdf page as context
 
+        if (userMessage === "\n") return;
+
         const userText = userMessage;
     
         setUserMessage("");
+
+        setChatHistory(prevChatHistory => prevChatHistory.concat(
+            <Message
+                isBot={false}
+                text={userText}
+                scrollToBottom={scrollToBottom}
+            />
+        ));
 
         const pageContext = usePageText ? pageText : "";
 
@@ -59,12 +76,7 @@ export default function Chat(props){
 
         setOpenaiChatHistory(updatedChatHistory);
     
-        setChatHistory(chatHistory.concat([
-            <Message
-                isBot={false}
-                text={userText}
-                scrollToBottom={scrollToBottom}
-            />,
+        setChatHistory(prevChatHistory => prevChatHistory.concat([
             <Message
                 isBot={true}
                 stream={stream}
@@ -75,10 +87,13 @@ export default function Chat(props){
                 scrollToBottom={scrollToBottom}
             />
         ]));
-
     };
 
-   
+    const handleIconClick = (buttonId) => {
+        setAnimatingButton(buttonId);
+        setTimeout(() => setAnimatingButton(null), 300); // Reset after animation duration
+    };
+
     useEffect(() => {
         if (props.scrollRef && props.scrollRef.current) {
             props.scrollRef.current.scrollIntoView({ behavior: "smooth" });
@@ -88,14 +103,17 @@ export default function Chat(props){
 
     return (
         <div className="chat">
-            <button
-                className="generate"
-                id="hoverable"
-                disabled={!props.text || isGenerating}
-                onClick={handleGenerate}
-            >
-                Generate
-            </button>
+            <div className="top-chat-elements">
+                
+                <button
+                    className="generate"
+                    id="hoverable"
+                    disabled={!props.text || isGenerating}
+                    onClick={handleGenerate}
+                >
+                    Generate
+                </button>
+            </div>
             <div className="messages" ref={messageRef}>
                 {chatHistory.map((message, index) => (
                     <div key={index}>
@@ -104,47 +122,80 @@ export default function Chat(props){
                 ))}
             </div>
             <div className="chat-elements">
-                <input
-                    type="text"
+                <TextareaAutosize
+                    id="userMessageTextarea"
+                    placeholder="Ask about content"
                     value={userMessage}
                     onChange={(event) => setUserMessage(event.target.value)}
-                    placeholder="Ask about content"
-                    id="hoverable"
                     onKeyDown={(event) => {
-                        if (event.key === "Enter") {
+                        if (event.key === "Enter" && !event.shiftKey && userMessage) {
+                            event.preventDefault(); // Prevents the default action of Enter key
                             handleSendMessage(event);
                         }
                     }}
                     disabled={!props.text || isGenerating}
+                    style={{ resize: 'none', overflow: 'hidden' }} // Inline CSS to prevent resizing and hide overflow
                 />
+
                 <button
-                    id="hoverable"
                     disabled={!props.text || isGenerating}
                     onClick={() => {
+                        handleIconClick('context');
                         setUsePageText(!usePageText);
                     }}
-                    className={usePageText ? "" : "no-context"}
+                    title={usePageText? "Use page text as context" : "Use empty context"}
                 >
-                    Context?
+                    <FontAwesomeIcon 
+                        icon={usePageText? faFileSolid : faFileReg} 
+                        className={animatingButton === 'context' ? 'pulse-animation' : ''}
+                    />
                 </button>
                 <button
-                    id="hoverable"
-                    disabled={!props.text || isGenerating}
-                    onClick={handleSendMessage}
+                    disabled={!props.text || isGenerating || !userMessage}
+                    onClick={() => {
+                        handleIconClick('send');
+                        handleSendMessage();
+                    }}
+                    title="Send message"
                 >
-                    Send
+                    <FontAwesomeIcon icon={faPaperPlane} className={animatingButton === 'send' ? 'pulse-animation' : ''} />
                 </button>
                 <button
-                    id="hoverable"
                     disabled={chatHistory.length === 0}
                     onClick={() => {
+                        handleIconClick('clear');
                         setChatHistory([]);
-                        setOpenaiChatHistory([]);}
-                    }
+                        setOpenaiChatHistory([]);
+                        setIsGenerating(false);
+                    }}
+                    title = {isGenerating? "Stop generating" : "Clear chat"}
                 >
-                    Clear
+                    <FontAwesomeIcon icon={isGenerating? faStop : faTrash} className={animatingButton === 'clear' ? 'pulse-animation' : ''} />
                 </button>
-
+            </div>
+            <div className="additional-chat-elements">
+                <select
+                    className="mode-selector"
+                    value={model}
+                    onChange={(event) => {
+                        setModel(event.target.value);
+                        gptUtils.setModel(event.target.value);
+                        console.log(event.target.value);
+                    }}
+                >
+                    {supportedModels.map((model) => (
+                        <option key={model} value={model}>
+                            {model}
+                        </option>
+                    ))}
+                </select>
+                <div className="alert">
+                    {(model === "gpt-4-1106-preview" || model === "gpt-4") && (
+                        <FontAwesomeIcon icon={faExclamationCircle} className="alert-icon" />
+                    )}
+                    {model === "gpt-4-1106-preview" && " certain features may not work with the selected model"}
+                    {model === "gpt-4" && " while smarter, the usage cost for this model is expensive. use with caution"}
+                </div>
             </div>
         </div>
     );
