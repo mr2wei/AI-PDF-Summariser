@@ -10,7 +10,6 @@ import '../styles/PDFViewer.css'
 
 export default function PDFViewer(props) {
     const [numPages, setNumPages] = useState(null);
-    const [pageNumber, setPageNumber] = useState(1);
     const [jumpToPage, setJumpToPage] = useState("");
     const pdfRef = useRef(null);
 
@@ -47,15 +46,15 @@ export default function PDFViewer(props) {
 
     const goToPreviousPage = (event) => {
         event.preventDefault();
-        if (pageNumber > 1) {
-            setPageNumber(pageNumber - 1);
+        if (props.pageNumber > 1) {
+            props.setPageNumber(props.pageNumber - 1);
         }
     };
 
     const goToNextPage = (event) => {
         event.preventDefault();
-        if (pageNumber < numPages) {
-            setPageNumber(pageNumber + 1);
+        if (props.pageNumber < numPages) {
+            props.setPageNumber(props.pageNumber + 1);
         }
     };
 
@@ -63,7 +62,7 @@ export default function PDFViewer(props) {
         event.preventDefault();
         const page = parseInt(jumpToPage);
         if (!isNaN(page) && page >= 1 && page <= numPages) {
-            setPageNumber(page);
+            props.setPageNumber(page);
         }
         setJumpToPage("");
     };
@@ -71,11 +70,11 @@ export default function PDFViewer(props) {
     return (
         <div className="pdf-container">
             <div className="pdf-controls">
-                <button className="page-indicator">Page {pageNumber} of {numPages}</button>
-                <button onClick={goToPreviousPage} id="hoverable" disabled={pageNumber === 1} className="page-control">
+                <button className="page-indicator">Page {props.pageNumber} of {numPages}</button>
+                <button onClick={goToPreviousPage} id="hoverable" disabled={props.pageNumber === 1} className="page-control">
                     <FontAwesomeIcon icon={faCaretLeft} />
                 </button>
-                <button onClick={goToNextPage} id="hoverable" disabled={pageNumber === numPages} className="page-control">
+                <button onClick={goToNextPage} id="hoverable" disabled={props.pageNumber === numPages} className="page-control">
                     <FontAwesomeIcon icon={faCaretRight} />
                 </button>
                 <input
@@ -100,7 +99,7 @@ export default function PDFViewer(props) {
                     {({ width, height, targetRef }) => (
                         <div ref={targetRef}>
                             <Document file={props.file} onLoadSuccess={onDocumentLoadSuccess} ref={pdfRef}>
-                                <Page pageNumber={pageNumber} width={width} height={height} onLoadSuccess={onPageLoadSuccess} />
+                                <Page pageNumber={props.pageNumber} width={width} height={height} onLoadSuccess={onPageLoadSuccess} />
                             </Document>
                         </div>
                     )}

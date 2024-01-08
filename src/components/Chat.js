@@ -7,24 +7,35 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faFile as faFileSolid, faTrash, faStop, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import { faFile as faFileReg } from '@fortawesome/free-regular-svg-icons';
 
+
 export default function Chat(props){
 
     const [model, setModel] = useState("gpt-3.5-turbo");
 
-    const gptUtils = new GPT(model);
    
     const [pageText, setPageText] = useState("");
     const [chatHistory, setChatHistory] = useState([]);
-    const [isGenerating, setIsGenerating] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(true);
     const [userMessage, setUserMessage] = useState("");
     const [openaiChatHistory,setOpenaiChatHistory] = useState([]);
     const [usePageText, setUsePageText] = useState(true);
     const [animatingButton, setAnimatingButton] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  
     const messageRef = useRef(null);
+    const gptUtils = useRef(null); 
+    const supportedModels = useRef(null); 
 
-    const supportedModels = gptUtils.getSupportedModels();
+    useEffect(() => {
+        console.log("useEffect");
+        gptUtils.current = new GPT(model);
+        gptUtils.current.setActivePDF(props.file);
+        supportedModels.current = gptUtils.current.getSupportedModels();   
+        setIsGenerating(false);
+        setLoading(false);
+    }, [props.file]);
+
+
 
     const scrollToBottom = () => {
         if (messageRef.current) {
@@ -34,7 +45,7 @@ export default function Chat(props){
 
     const handleGenerate = async () => {
         setIsGenerating(true);
-        const { message, updatedChatHistory, stream } = await gptUtils.generateSummary(pageText);
+        const { message, updatedChatHistory, stream } = await gptUtils.current.generateSummary(pageText);
 
         setOpenaiChatHistory(openaiChatHistory.concat(updatedChatHistory));
 
@@ -72,7 +83,7 @@ export default function Chat(props){
 
         setIsGenerating(true);
 
-        const { message, updatedChatHistory, stream } = await gptUtils.fetchChatCompletions(openaiChatHistory, pageContext, userText);
+        const { message, updatedChatHistory, stream } = await gptUtils.current.smarterFetchChatCompletions(openaiChatHistory, pageContext, props.pageNumber, userText);
 
         setOpenaiChatHistory(updatedChatHistory);
     
@@ -100,6 +111,13 @@ export default function Chat(props){
         }
         setPageText(props.text);
     }, [props.text, props.scrollRef]);
+
+    if (loading) {
+        return (
+            <div>Loading</div>
+        );
+    }
+        
 
     return (
         <div className="chat">
@@ -179,11 +197,11 @@ export default function Chat(props){
                     value={model}
                     onChange={(event) => {
                         setModel(event.target.value);
-                        gptUtils.setModel(event.target.value);
+                        gptUtils.current.setModel(event.target.value);
                         console.log(event.target.value);
                     }}
                 >
-                    {supportedModels.map((model) => (
+                    {supportedModels.current.map((model) => (
                         <option key={model} value={model}>
                             {model}
                         </option>

@@ -9,15 +9,15 @@ import '../styles/PDFViewer.css';
 export default function Main(props) {
     const [pageText, setPageText] = useState("");
     const textContainerRef = useRef(null);
-
+    const [pageNumber, setPageNumber] = useState(1);
     
     return (
         <div>
             <div className="container">
-                <PDFViewer file={props.file} setPageText={setPageText} />
+                <PDFViewer file={props.file} setPageText={setPageText} pageNumber = {pageNumber} setPageNumber={setPageNumber} />
 
                 <div className="text-container" ref={textContainerRef}>
-                    <Chat text={pageText} />
+                    <Chat file={props.file} text={pageText} pageNumber = {pageNumber} />
                 </div>
             </div>
         </div>
