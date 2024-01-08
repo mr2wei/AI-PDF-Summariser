@@ -1,7 +1,12 @@
 # AI PDF Summariser
 
+![Future of taking notes, with a box showing the PDF document and the navigation buttons and another box showing the AI generated content](images/Site.png)
+
+![Image showing more examples of the ai generated explanations and summarise and bold text "Learn Concepts Faster" and "Get Questions Answered"](images/Generation.png)
+
+
 ## Website
-to be hosted
+<a href="https://mr2wei.github.io/AI-PDF-Summariser">mr2wei.github.io/AI-PDF-Summariser</a>
 
 ## Introduction
 Using openAI API, this web app will be able to summarise and respond to questions about a given PDF file. Easily create notes from the textbook by letting the AI summarise and explain the content to you. If you're still confused, simply ask the AI questions regarding the text and it will answer using the information from the PDF.
@@ -16,8 +21,8 @@ Note: The context button simply toggles between adding the context of the page o
 - It only has context of the current page, so it will not be able to answer questions about the entire PDF.
 - It doesn't handle math problems well since I haven't implemented any way for the AI to run equations.
 
-## Known Issues
-- I can't get the chat box to scroll to the bottom when a new message is added. 
-- The size of the PDF might exceed its container
-- Pressing enter while the chat box is empty will send a message (this should be easy to fix)
-- I need to remove unused default stuff that came with create-react-app
+## Current Progress
+- Using function calling to allow the AI to get text from any page in the PDF.
+
+## Issues
+- Rendering latex is very finicky and doesn't always work.

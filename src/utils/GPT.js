@@ -6,7 +6,7 @@ import * as Tiktoken from 'js-tiktoken';
 export default class GPT {
     constructor(model) {
         this.openai = new OpenAI({ apiKey: Cookies.get('apiKey'), dangerouslyAllowBrowser: true });
-        this.guidance = "Your job is to use context from text given to answer the user's requests. For summaries, Your job is to provide a neat summary of key points and information from the text. please format the response using bullet points for each key point. If the user is asking about the content, prioritise answering with information given. Format response in HTML, HTML formatting is allowed. Always use LaTeX for math.";
+        this.guidance = "Your job is to use context from text given to answer the user's requests. For summaries, Your job is to provide a neat summary of key points and information from the text. please format the response using bullet points for each key point. If the user is asking about the content, prioritise answering with information given. Format response in markdown. Always use LaTeX for math.";
         this.model = model;
     }
 
@@ -45,7 +45,7 @@ export default class GPT {
     generateSummary = async (text) => {
         const openaiChatHistory = [
             { role: 'system', content: this.guidance },
-            { role: 'user', content: `Summarise "${text}" and format response in HTML, HTML formatting is allowed.` }
+            { role: 'user', content: `Summarise "${text}" and format response in markdown` }
         ];
         try {
             const stream = await this.openai.chat.completions.create({
