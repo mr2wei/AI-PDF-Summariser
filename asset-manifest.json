@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/AI-PDF-Summariser/static/css/main.de077d20.css",
-    "main.js": "/AI-PDF-Summariser/static/js/main.8f7f181b.js",
+    "main.css": "/AI-PDF-Summariser/static/css/main.5dbc1807.css",
+    "main.js": "/AI-PDF-Summariser/static/js/main.e06fa575.js",
     "static/js/787.3d85cb05.chunk.js": "/AI-PDF-Summariser/static/js/787.3d85cb05.chunk.js",
     "index.html": "/AI-PDF-Summariser/index.html",
-    "main.de077d20.css.map": "/AI-PDF-Summariser/static/css/main.de077d20.css.map",
-    "main.8f7f181b.js.map": "/AI-PDF-Summariser/static/js/main.8f7f181b.js.map",
+    "main.5dbc1807.css.map": "/AI-PDF-Summariser/static/css/main.5dbc1807.css.map",
+    "main.e06fa575.js.map": "/AI-PDF-Summariser/static/js/main.e06fa575.js.map",
     "787.3d85cb05.chunk.js.map": "/AI-PDF-Summariser/static/js/787.3d85cb05.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.de077d20.css",
-    "static/js/main.8f7f181b.js"
+    "static/css/main.5dbc1807.css",
+    "static/js/main.e06fa575.js"
   ]
 }
