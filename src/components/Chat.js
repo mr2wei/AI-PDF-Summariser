@@ -4,8 +4,7 @@ import '../styles/Chat.css';
 import GPT from '../utils/GPT.js';
 import TextareaAutosize from 'react-textarea-autosize';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faFile as faFileSolid, faTrash, faStop, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
-import { faFile as faFileReg } from '@fortawesome/free-regular-svg-icons';
+import { faPaperPlane, faTrash, faStop, faExclamationCircle, faFileCircleXmark, faFileCircleMinus, faFileCirclePlus } from '@fortawesome/free-solid-svg-icons';
 
 
 export default function Chat(props){
@@ -18,9 +17,11 @@ export default function Chat(props){
     const [isGenerating, setIsGenerating] = useState(true);
     const [userMessage, setUserMessage] = useState("");
     const [openaiChatHistory,setOpenaiChatHistory] = useState([]);
-    const [usePageText, setUsePageText] = useState(true);
+    const [usePageText, setUsePageText] = useState("-");
     const [animatingButton, setAnimatingButton] = useState(null);
     const [loading, setLoading] = useState(true);
+    
+    const pageContextCycles = ["-", "+", "x"];
 
     const messageRef = useRef(null);
     const gptUtils = useRef(null); 
@@ -30,10 +31,11 @@ export default function Chat(props){
         console.log("useEffect");
         gptUtils.current = new GPT(model);
         gptUtils.current.setActivePDF(props.file);
+        gptUtils.current.setModel(model);
         supportedModels.current = gptUtils.current.getSupportedModels();   
         setIsGenerating(false);
         setLoading(false);
-    }, [props.file]);
+    }, [props.file, model]);
 
 
 
@@ -57,9 +59,32 @@ export default function Chat(props){
             setOpenaiChatHistory={setOpenaiChatHistory}
             setIsGenerating={setIsGenerating}
             scrollToBottom={scrollToBottom}
+            key={chatHistory.length}
         />));
         
     };
+
+    const addLoadingChatBox = () => {
+        setChatHistory(prevChatHistory => prevChatHistory.concat(
+            <Message
+                isBot={true}
+                text="Reading the PDF page"
+                scrollToBottom={scrollToBottom}
+                key={chatHistory.length}
+            />
+        ));
+    }
+
+    const addPageCallChatBox = (page) => {
+        setChatHistory(prevChatHistory => prevChatHistory.concat(
+            <Message
+                isBot={true}
+                text={`Reading from page ${page} of the PDF`}
+                scrollToBottom={scrollToBottom}
+                key={chatHistory.length}
+            />
+        ));
+    }
 
     const handleSendMessage = async (event) => {
         // TODO: Send message to chat history
@@ -76,14 +101,21 @@ export default function Chat(props){
                 isBot={false}
                 text={userText}
                 scrollToBottom={scrollToBottom}
+                key={chatHistory.length}
             />
         ));
 
-        const pageContext = usePageText ? pageText : "";
+        const pageContext = usePageText !== "x" ? pageText : "";
 
         setIsGenerating(true);
 
-        const { message, updatedChatHistory, stream } = await gptUtils.current.smarterFetchChatCompletions(openaiChatHistory, pageContext, props.pageNumber, userText);
+        const useFunctionCalling = usePageText === "+";
+
+        if (useFunctionCalling) {
+            addLoadingChatBox();
+        }
+
+        const { message, updatedChatHistory, stream } = await gptUtils.current.fetchChatCompletions(openaiChatHistory, pageContext, props.pageNumber, userText, useFunctionCalling, addPageCallChatBox);
 
         setOpenaiChatHistory(updatedChatHistory);
     
@@ -96,6 +128,7 @@ export default function Chat(props){
                 setOpenaiChatHistory={setOpenaiChatHistory}
                 setIsGenerating={setIsGenerating}
                 scrollToBottom={scrollToBottom}
+                key={chatHistory.length}
             />
         ]));
     };
@@ -129,7 +162,7 @@ export default function Chat(props){
                     disabled={!props.text || isGenerating}
                     onClick={handleGenerate}
                 >
-                    Generate
+                    Summarise
                 </button>
             </div>
             <div className="messages" ref={messageRef}>
@@ -159,12 +192,12 @@ export default function Chat(props){
                     disabled={!props.text || isGenerating}
                     onClick={() => {
                         handleIconClick('context');
-                        setUsePageText(!usePageText);
+                        setUsePageText(pageContextCycles[(pageContextCycles.indexOf(usePageText) + 1) % 3]);
                     }}
-                    title={usePageText? "Use page text as context" : "Use empty context"}
+                    title={usePageText === "-" ? "Use page text as context" : usePageText === "+" ? "Use multiple pages as context" : "Do not use page text as context"}
                 >
                     <FontAwesomeIcon 
-                        icon={usePageText? faFileSolid : faFileReg} 
+                        icon={usePageText === "-" ? faFileCircleMinus : usePageText === "+" ? faFileCirclePlus : faFileCircleXmark} 
                         className={animatingButton === 'context' ? 'pulse-animation' : ''}
                     />
                 </button>

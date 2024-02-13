@@ -51,9 +51,12 @@ export default function Message(props){
                 setCompleted(true);
                 props.scrollToBottom && props.scrollToBottom();
             }
+            window.MathJax && window.MathJax.typesetPromise();
+
         };
     
         fetchData().catch(console.error);
+
     }, [completed, props.isBot, props.text, props.stream, props.setIsGenerating, props.setOpenaiChatHistory, props.scrollToBottom]);
 
     return (
@@ -62,7 +65,7 @@ export default function Message(props){
                 <div className="author">
                     {props.isBot? "AI ✨" : "User"}
                 </div>
-                <MarkdownRender>
+                <MarkdownRender key={props.key}>
                     {adaptLatex(textContent)}
                 </MarkdownRender>
             </div>
