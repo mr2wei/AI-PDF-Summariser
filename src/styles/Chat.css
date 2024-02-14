@@ -86,6 +86,15 @@ input:disabled {
     align-items: flex-end;
 }
 
+#thought {
+    font-style: italic;
+    background-color: rgba(0, 0, 0, 0) !important;
+    font-size: 1vw;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0.8;
+}
+
 .bot-message {
     background-color: var(--bot-message-color);
     flex-direction: column;

@@ -12,6 +12,8 @@ export default function Message(props){
         tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
     };
 
+    console.log("Message props", props);
+
     const adaptLatex = (text) => {
         // convert \[ \] to $$ $$ and \( \) to $ $
         let newText = text;
@@ -51,18 +53,21 @@ export default function Message(props){
                 setCompleted(true);
                 props.scrollToBottom && props.scrollToBottom();
             }
+            window.MathJax && window.MathJax.typesetPromise();
+
         };
     
         fetchData().catch(console.error);
+
     }, [completed, props.isBot, props.text, props.stream, props.setIsGenerating, props.setOpenaiChatHistory, props.scrollToBottom]);
 
     return (
-        <div className={props.isBot? "bot-message-container" : "user-message-container"}>
-            <div className={props.isBot? "bot-message" : "user-message"} id = "message">
-                <div className="author">
+        <div className={props.isBot? "bot-message-container" : "user-message-container"} >
+            <div className={props.isBot? "bot-message" : "user-message"} id = {props.thought? "thought" : "message"}>
+                {!props.thought && <div className="author">
                     {props.isBot? "AI ✨" : "User"}
-                </div>
-                <MarkdownRender>
+                </div>}
+                <MarkdownRender key={props.key}>
                     {adaptLatex(textContent)}
                 </MarkdownRender>
             </div>

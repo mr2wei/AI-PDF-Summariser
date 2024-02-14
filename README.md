@@ -15,11 +15,10 @@ Using openAI API, this web app will be able to summarise and respond to question
 1. Upload a PDF file
 2. Select Generate to summarise the text of the displayed page or simply type in the chat box to ask questions about the text.
 
-Note: The context button simply toggles between adding the context of the page on each message or not.
+Note: The file button cycles between using the active PDF page as context for your message ('-' symbol) or using multiple pages as context ('+' symbol) or no context ('x' symbol).
 
 ## Limitations
-- It only has context of the current page, so it will not be able to answer questions about the entire PDF.
-- It doesn't handle math problems well since I haven't implemented any way for the AI to run equations.
+- It doesn't handle calculating math problems well since I haven't implemented any way for the AI to run equations.
 
 ## Current Progress
 - Using function calling to allow the AI to get text from any page in the PDF.
