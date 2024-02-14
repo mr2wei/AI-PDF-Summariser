@@ -1,4 +1,4 @@
-# AI PDF Summariser
+# [AI PDF Summariser](https://mr2wei.github.io/AI-PDF-Summariser)
 
 ![Future of taking notes, with a box showing the PDF document and the navigation buttons and another box showing the AI generated content](images/Site.png)
 
@@ -19,9 +19,3 @@ Note: The file button cycles between using the active PDF page as context for yo
 
 ## Limitations
 - It doesn't handle calculating math problems well since I haven't implemented any way for the AI to run equations.
-
-## Current Progress
-- Using function calling to allow the AI to get text from any page in the PDF.
-
-## Issues
-- Rendering latex is very finicky and doesn't always work.
