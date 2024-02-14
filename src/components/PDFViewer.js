@@ -90,7 +90,7 @@ export default function PDFViewer(props) {
                         }
                     }}
                 />
-                <button id="hoverable" onClick={handleJumpToPage}>
+                <button className="jump-button" id="hoverable" onClick={handleJumpToPage}>
                     <FontAwesomeIcon icon={faForward} />
                 </button>
             </div>

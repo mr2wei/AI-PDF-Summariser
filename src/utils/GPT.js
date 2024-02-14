@@ -101,6 +101,10 @@ export default class GPT {
     smarterFetchChatCompletions = async (openaiChatHistory, pageText, pageNumber, userMessage, addPageCallChatBox) => {
         
         const getPageTextFromPageNumber = async (pageNumber) => {
+            // if pageNumber is out of range, return an error message
+            if (pageNumber < 1 || pageNumber > this.file.numPages) {
+                return `Page ${pageNumber} does not exist. The PDF has ${this.file.numPages} pages.`;
+            }
             const page = await this.file.getPage(pageNumber);
             const textContent = await page.getTextContent();
             let text = "";

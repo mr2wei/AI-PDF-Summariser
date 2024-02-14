@@ -71,6 +71,7 @@ export default function Chat(props){
                 text="Reading the PDF page"
                 scrollToBottom={scrollToBottom}
                 key={chatHistory.length}
+                thought = {true}
             />
         ));
     }
@@ -82,6 +83,7 @@ export default function Chat(props){
                 text={`Reading from page ${page} of the PDF`}
                 scrollToBottom={scrollToBottom}
                 key={chatHistory.length}
+                thought = {true}
             />
         ));
     }

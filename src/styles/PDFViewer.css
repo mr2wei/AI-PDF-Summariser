@@ -40,7 +40,10 @@ button:disabled {
     padding: 0px; 
     box-sizing: border-box; /* This ensures that padding is included in total width */
     width: 100%; /* Set the width to 100% of its parent */
-    /* Add additional styling as necessary */
+}
+
+.jump-button {
+    margin-right: 0;
 }
 
 .pdf-controls .input-page {
