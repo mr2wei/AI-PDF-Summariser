@@ -81,7 +81,7 @@ export default class GPT {
     generateSummary = async (text) => {
         const openaiChatHistory = [
             { role: 'system', content: this.guidance },
-            { role: 'user', content: `Summarise "${text}" and format response in markdown.` }
+            { role: 'user', content: `Summarise "${text}" and format response in HTML, HTML formatting is allowed.` }
         ];
         try {
             const stream = await this.openai.chat.completions.create({

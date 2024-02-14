@@ -105,6 +105,11 @@ input:disabled {
     box-sizing: border-box; 
     display: flex;
     width: 100%; /* Ensure full width */
+    margin-bottom: 2%;
+}
+
+.top-chat-elements button {
+    margin: 0;
 }
 
 .chat-elements {
