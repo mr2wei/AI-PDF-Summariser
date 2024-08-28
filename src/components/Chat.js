@@ -33,7 +33,7 @@ export default function Chat(props){
         gptUtils.current.setActivePDF(props.file);
         gptUtils.current.setModel(model);
         supportedModels.current = gptUtils.current.getSupportedModels();
-        setModel(supportedModels.current[0]);   
+        (model === "" && setModel(supportedModels.current[0]));   
         setIsGenerating(false);
         setLoading(false);
     }, [props.file, model]);
