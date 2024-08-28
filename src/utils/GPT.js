@@ -261,9 +261,10 @@ export default class GPT {
 
     getSupportedModels = () => {
         return [
+            "gpt-4o-mini",
             "gpt-3.5-turbo",
-            "gpt-4",
-            "gpt-4-1106-preview",
+            "gpt-4o",
+            "gpt-4-turbo",
         ];
     }
 

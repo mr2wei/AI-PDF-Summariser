@@ -9,7 +9,7 @@ import { faPaperPlane, faTrash, faStop, faExclamationCircle, faFileCircleXmark, 
 
 export default function Chat(props){
 
-    const [model, setModel] = useState("gpt-3.5-turbo");
+    const [model, setModel] = useState("");
 
    
     const [pageText, setPageText] = useState("");
@@ -32,7 +32,8 @@ export default function Chat(props){
         gptUtils.current = new GPT(model);
         gptUtils.current.setActivePDF(props.file);
         gptUtils.current.setModel(model);
-        supportedModels.current = gptUtils.current.getSupportedModels();   
+        supportedModels.current = gptUtils.current.getSupportedModels();
+        setModel(supportedModels.current[0]);   
         setIsGenerating(false);
         setLoading(false);
     }, [props.file, model]);
