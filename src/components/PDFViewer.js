@@ -70,29 +70,31 @@ export default function PDFViewer(props) {
     return (
         <div className="pdf-container">
             <div className="pdf-controls">
-                <button className="page-indicator">Page {props.pageNumber} of {numPages}</button>
+                <div className="page-indicator">
+                    Page 
+                    <input
+                        className="input-page"
+                        type="text"
+                        value={jumpToPage}
+                        onChange={(e) => setJumpToPage(e.target.value)}
+                        placeholder={props.pageNumber}
+                        id="hoverable"
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                handleJumpToPage(e);
+                            }
+                        }}
+                    /> of {numPages}</div>
                 <button onClick={goToPreviousPage} id="hoverable" disabled={props.pageNumber === 1} className="page-control">
                     <FontAwesomeIcon icon={faCaretLeft} />
                 </button>
                 <button onClick={goToNextPage} id="hoverable" disabled={props.pageNumber === numPages} className="page-control">
                     <FontAwesomeIcon icon={faCaretRight} />
                 </button>
-                <input
-                    className="input-page"
-                    type="text"
-                    value={jumpToPage}
-                    onChange={(e) => setJumpToPage(e.target.value)}
-                    placeholder="Jump"
-                    id="hoverable"
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                            handleJumpToPage(e);
-                        }
-                    }}
-                />
-                <button className="jump-button" id="hoverable" onClick={handleJumpToPage}>
-                    <FontAwesomeIcon icon={faForward} />
-                </button>
+                
+                <div className="control-padding">
+
+                </div>
             </div>
             <div className="pdf">
                 <ReactResizeDetector handleWidth handleHeight>
