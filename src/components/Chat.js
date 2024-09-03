@@ -9,43 +9,48 @@ import { faPaperPlane, faTrash, faStop, faExclamationCircle, faFileCircleXmark, 
 
 export default function Chat(props){
 
-    const [model, setModel] = useState("");
-
-   
-    const [pageText, setPageText] = useState("");
-    const [chatHistory, setChatHistory] = useState([]);
-    const [isGenerating, setIsGenerating] = useState(true);
-    const [userMessage, setUserMessage] = useState("");
-    const [openaiChatHistory,setOpenaiChatHistory] = useState([]);
-    const [usePageText, setUsePageText] = useState("-");
-    const [animatingButton, setAnimatingButton] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [model, setModel] = useState(""); // the model to use for generating completions
+    const [pageText, setPageText] = useState(""); // the text of the current pdf page
+    const [chatHistory, setChatHistory] = useState([]); // the chat history to be shown. This is an array of Message components.
+    const [isGenerating, setIsGenerating] = useState(true); // whether the model is currently generating completions
+    const [userMessage, setUserMessage] = useState(""); // the message the user is currently typing
+    const [openaiChatHistory,setOpenaiChatHistory] = useState([]); // the chat history to be sent to OpenAI. This is an array of objects with role and content keys.
+    const [usePageText, setUsePageText] = useState("-"); // whether to use the page text as context. "-" means use current page as context, "+" means use multiple pages as context, "x" means don't use page text as context
+    const [animatingButton, setAnimatingButton] = useState(null); // the button that is currently animating
+    const [loading, setLoading] = useState(true); // whether the page is currently loading (initialising the GPT object)
     
-    const pageContextCycles = ["-", "+", "x"];
+    const pageContextCycles = ["-", "+", "x"]; // the possible values for usePageText
 
-    const messageRef = useRef(null);
-    const gptUtils = useRef(null); 
-    const supportedModels = useRef(null); 
+    const messageRef = useRef(null); // reference to the message container div. Used to scroll to the bottom of the chat
+    const gptUtils = useRef(null); // reference to the GPT object
+    const supportedModels = useRef(null); // reference to the supported models for the GPT object
 
     useEffect(() => {
-        console.log("useEffect");
+        // console.log("useEffect");
+        // initialise the GPT object
         gptUtils.current = new GPT(model);
         gptUtils.current.setActivePDF(props.file);
         gptUtils.current.setModel(model);
         supportedModels.current = gptUtils.current.getSupportedModels();
+        // if the model is not set, set it to the first supported model.
         (model === "" && setModel(supportedModels.current[0]));   
         setIsGenerating(false);
         setLoading(false);
     }, [props.file, model]);
 
 
-
+    /**
+     * Scroll to the bottom of the chat
+     */
     const scrollToBottom = () => {
         if (messageRef.current) {
             messageRef.current.scrollTop = messageRef.current.scrollHeight;
         }
     };
 
+    /**
+     * Generate a summary of the page text
+     */
     const handleGenerate = async () => {
         setIsGenerating(true);
         const { message, updatedChatHistory, stream } = await gptUtils.current.generateSummary(pageText);
@@ -65,6 +70,9 @@ export default function Chat(props){
         
     };
 
+    /**
+     * Add a loading chat box to the chat history
+     */
     const addLoadingChatBox = () => {
         setChatHistory(prevChatHistory => prevChatHistory.concat(
             <Message
@@ -77,6 +85,11 @@ export default function Chat(props){
         ));
     }
 
+    /**
+     * Create a "thought" chat message that says which page is being read by the ai
+     * 
+     * @param {*} page the page number being read
+     */
     const addPageCallChatBox = (page) => {
         setChatHistory(prevChatHistory => prevChatHistory.concat(
             <Message
@@ -89,7 +102,10 @@ export default function Chat(props){
         ));
     }
 
-    const handleSendMessage = async (event) => {
+    /**
+     * Handle sending a message to the chat
+     */
+    const handleSendMessage = async () => {
         // TODO: Send message to chat history
         // if there is no chat history, add the pdf page as context
 
@@ -136,11 +152,19 @@ export default function Chat(props){
         ]));
     };
 
+    /**
+     * Handle clicking an icon button
+     * 
+     * @param {*} buttonId the id of the button that was clicked
+     */
     const handleIconClick = (buttonId) => {
         setAnimatingButton(buttonId);
         setTimeout(() => setAnimatingButton(null), 300); // Reset after animation duration
     };
 
+    /**
+     * Scroll to the bottom of the chat when the page text changes
+     */
     useEffect(() => {
         if (props.scrollRef && props.scrollRef.current) {
             props.scrollRef.current.scrollIntoView({ behavior: "smooth" });
@@ -148,6 +172,9 @@ export default function Chat(props){
         setPageText(props.text);
     }, [props.text, props.scrollRef]);
 
+    /**
+     * Shows a loading message while the page is loading
+     */
     if (loading) {
         return (
             <div>Loading</div>
@@ -184,7 +211,7 @@ export default function Chat(props){
                     onKeyDown={(event) => {
                         if (event.key === "Enter" && !event.shiftKey && userMessage) {
                             event.preventDefault(); // Prevents the default action of Enter key
-                            handleSendMessage(event);
+                            handleSendMessage();
                         }
                     }}
                     disabled={!props.text || isGenerating}

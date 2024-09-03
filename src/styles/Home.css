@@ -1,7 +1,6 @@
 .upload {
-    background-color: var(--nav-color);
+    background-color: var(--base-color);
     margin: 10px 0px;
-    background-color: var(--nav-color);
     padding: 12px 20px;
     border-radius: 18px;
     width: auto;
@@ -20,9 +19,9 @@
     transition: all 0.2s ease-out;
     border: 0;
     border-radius: 8px;
-    overflow: hidden;
-    white-space: nowrap;
+    overflow: none;
     text-overflow: ellipsis;
+    max-width: calc(100% - 32px);
 }
 
 .PDFViewer {

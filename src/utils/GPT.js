@@ -98,6 +98,16 @@ export default class GPT {
         };
     }
     
+    /**
+     * Allows AI to call a function to get text from a specific page in the PDF. This allows for multiple pages to be used as context.
+     * 
+     * @param {*} openaiChatHistory The chat history to be used for generating the response.
+     * @param {*} pageText The text from the page to be used as context.
+     * @param {*} pageNumber The page number to be used as context.
+     * @param {*} userMessage The user's message.
+     * @param {*} addPageCallChatBox A function to add a "thought" message to the chat history.
+     * @returns 
+     */
     smarterFetchChatCompletions = async (openaiChatHistory, pageText, pageNumber, userMessage, addPageCallChatBox) => {
         
         const getPageTextFromPageNumber = async (pageNumber) => {

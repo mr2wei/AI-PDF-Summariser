@@ -1,29 +1,27 @@
 :root {
-  --light-nav-color: #e4e5e6;
-  --dark-nav-color: #3b3e3f;
-  --light-nav-hover-color: #BECEEB;
-  --dark-nav-hover-color: #65706D;
+  --light-base-color: #e4e5e6;
+  --dark-base-color: #3b3e3f;
+  --base-color: var(--light-base-color);
+
   --light-container-highlight-color : #BECEEB;
   --dark-container-highlight-color : #65706D;
+  --container-highlight-color: var(--light-container-highlight-color);
+
   --light-button-highlight-color : #cdbed6;
   --dark-button-highlight-color : #9EB0AB;
-  --user-message-color: #d8dbf2;
-  --light-bot-message-color: #d8dbf2;
-  --dark-bot-message-color: #65706D;
-  --nav-color: var(--light-nav-color);
-  --nav-hover-color: var(--light-nav-hover-color);
-  --container-highlight-color: var(--light-container-highlight-color);
   --button-highlight-color: var(--light-button-highlight-color);
-  --bot-message-color: var(--light-bot-message-color);
+
+  --user-message-color: #d8dbf2;
+
   --dark-background-color: #313435;
   --light-background-color: #eef1f2;
+
   --text-color: var(--dark-background-color);
 }
 
 @media (prefers-color-scheme: dark){
   :root {
-    --nav-color: var(--dark-nav-color);
-    --nav-hover-color: var(--dark-nav-hover-color);
+    --base-color: var(--dark-base-color);
     --container-highlight-color: var(--dark-container-highlight-color);
     --button-highlight-color: var(--dark-button-highlight-color);
     --bot-message-color: var(--dark-bot-message-color);

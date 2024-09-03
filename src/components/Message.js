@@ -12,7 +12,7 @@ export default function Message(props){
         tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
     };
 
-    console.log("Message props", props);
+    // console.log("Message props", props);
 
     const adaptLatex = (text) => {
         // convert \[ \] to $$ $$ and \( \) to $ $
