@@ -14,9 +14,50 @@
     max-width: 45%;
 }
 
+.hidden {
+    height: 0 !important;
+    overflow: hidden !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: 0 !important;
+}
+
+.table-of-contents {
+    transition: border 0.2s, padding 0.05s, height 0.2s ease-in-out;
+    background-color: var(--base-color);
+    border: 4px solid var(--container-highlight-color);
+    border-top: 0px;
+    box-sizing: border-box;
+    border-radius: 0px 0px 8px 8px;
+    padding: 10px 15px;
+    font-size: 1.2rem;
+    overflow: auto;
+    height: calc(100% - 80px);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.toc-item {
+    padding: 8px 12px 8px 24px;
+}
+
+.toc-highlight {
+    background-color: var(--container-highlight-color);
+    border-radius: 8px;
+}
+
+.toc-section-header {
+    opacity: 0.6;
+    font-weight: bold;
+    padding: 8px 12px 8px 12px;
+}
+
+
 .pdf {
     overflow-y: auto;
     height: 92%;
+    transition: height 0.2s ease-in-out;
 }
 
 
@@ -69,7 +110,9 @@
 }
 
 .page-control {
-    width: 10%;
+    width: 45px;
+    justify-content: center;
+    align-items: center;
 }
 
 .text-container {

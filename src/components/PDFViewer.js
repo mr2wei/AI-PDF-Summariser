@@ -2,7 +2,7 @@ import ReactResizeDetector from "react-resize-detector";
 import React, { useRef, useEffect, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faForward, faCaretRight, faCaretLeft } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faCaretRight, faCaretLeft } from '@fortawesome/free-solid-svg-icons';
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import '../styles/PDFViewer.css'
@@ -11,11 +11,80 @@ import '../styles/PDFViewer.css'
 export default function PDFViewer(props) {
     const [numPages, setNumPages] = useState(null);
     const [jumpToPage, setJumpToPage] = useState("");
+    const [outline, setOutline] = useState([]);
+    const [showTableOfContents, setShowTableOfContents] = useState(false);
+    const [showPDF, setShowPDF] = useState(true);
+    const [currentSection, setCurrentSection] = useState("");
     const pdfRef = useRef(null);
 
     useEffect(() => {
         pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
     }, []);
+
+    const loadPDFOutline = async (fileData) => {
+        setOutline([]);
+        try {
+            const loadingTask = pdfjs.getDocument({ data: fileData });
+            const pdf = await loadingTask.promise;
+            const outline = await pdf.getOutline();
+            setOutline(outline.map(item => ({ title: item.title, pageNumber: null })));
+    
+            // Resolve each destination to find the page numbers
+            for (let item of outline) {
+                if (item.dest && Array.isArray(item.dest) && item.dest.length > 0) {
+                    try {
+                        // The first element often contains a reference to the page object
+                        const pageRef = item.dest[0];
+                        if (pageRef && typeof pageRef === 'object' && 'num' in pageRef) {
+                            const pageNumber = await pdf.getPageIndex(pageRef) + 1;
+                            // console.log(`Chapter '${item.title}' starts on page: ${pageNumber}`);
+            
+                            setOutline(prevOutline => prevOutline.map(ot => 
+                                ot.title === item.title ? { ...ot, pageNumber } : ot
+                            ));
+                        }
+                    } catch (error) {
+                        console.error('Error resolving destination for:', item.title, error);
+                    }
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error loading PDF:', error);
+        }
+        console.log(outline)
+    };
+    
+    useEffect(() => {
+        props.setPageNumber(1);
+        if (props.file && props.file instanceof File) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                loadPDFOutline(e.target.result);
+            };
+            reader.onerror = (e) => {
+                console.error('Error reading file:', e);
+            };
+            reader.readAsArrayBuffer(props.file);
+        }
+    }, [props.file]);
+    
+    const toggleTableOfContents = () => {
+        // if table of contents is open, close it
+        if (showTableOfContents) {
+            setShowTableOfContents(!showTableOfContents);
+            setTimeout(() => {
+                setShowPDF(!showPDF);
+            }, 250);
+        } else {
+            setShowPDF(!showPDF);
+            setTimeout(() => {
+                setShowTableOfContents(!showTableOfContents);
+            }, 250);
+        }
+        return;
+    }
+    
 
     const onDocumentLoadSuccess = ({ numPages }) => {
         setNumPages(numPages);
@@ -28,19 +97,6 @@ export default function PDFViewer(props) {
                 text += item.str + " ";
             });
             props.setPageText(text);
-
-            // if (textContainerRef.current) {
-            //     textContainerRef.current.scrollIntoView();
-            // }
-            // if (textContainerRef.current) {
-            //     const containerHeight = textContainerRef.current.offsetHeight;
-            //     const pageHeight = page.view[3];
-            //     if (pageHeight !== containerHeight * 0.9) {
-            //         const scale = containerHeight*0.9 / pageHeight;
-            //         document.getElementsByClassName("pdf")[0].style.transform = `scale(${scale})`;
-            //     }
-
-            // }
         });
     };
 
@@ -67,9 +123,31 @@ export default function PDFViewer(props) {
         setJumpToPage("");
     };
 
+    const getCurrentSection = () => {
+        const possibleSections = outline.filter(item => item.pageNumber && props.pageNumber >= item.pageNumber);
+        for (let i = possibleSections.length - 1; i >= 0; i--) {
+            if (possibleSections[i].pageNumber && props.pageNumber >= possibleSections[i].pageNumber) {
+                setCurrentSection(possibleSections[i].title);
+                break;
+            }
+        }
+    }
+
+    useEffect(() => {
+        getCurrentSection();
+    }, [props.pageNumber]);
+
     return (
         <div className="pdf-container">
             <div className="pdf-controls">
+                <button 
+                    className="page-control" 
+                    id="hoverable" 
+                    onClick={() => toggleTableOfContents()}
+                    disabled={outline.length === 0}
+                >
+                    <FontAwesomeIcon icon={faBars} />
+                </button>
                 <div className="page-indicator">
                     Page 
                     <input
@@ -92,11 +170,22 @@ export default function PDFViewer(props) {
                     <FontAwesomeIcon icon={faCaretRight} />
                 </button>
                 
-                <div className="control-padding">
-
-                </div>
+                <div className="control-padding"></div>
             </div>
-            <div className="pdf">
+            <div className={`table-of-contents ${showTableOfContents ? "" : "hidden"}`}>
+                {outline.map((item, index) => {
+                    return (
+                        <div 
+                            key={index} 
+                            className={`toc-item ${item.pageNumber ? "" : "toc-section-header"} ${currentSection == item.title ? "toc-highlight" : ""}`} 
+                            onClick={() => item.pageNumber && props.setPageNumber(item.pageNumber) && toggleTableOfContents()}
+                        >
+                            {item.title}
+                        </div>
+                    );
+                })}
+            </div>
+            <div className={`pdf ${showPDF ? "": "hidden"}`}>
                 <ReactResizeDetector handleWidth handleHeight>
                     {({ width, height, targetRef }) => (
                         <div ref={targetRef}>
@@ -108,18 +197,6 @@ export default function PDFViewer(props) {
                 </ReactResizeDetector>
             </div>
 
-
-            {/* <Document
-                        className="pdf"
-                        file={props.file}
-                        onLoadSuccess={onDocumentLoadSuccess}
-                        ref={pdfRef}
-                    >
-                        <Page
-                            pageNumber={pageNumber}
-                            onLoadSuccess={onPageLoadSuccess}
-                        />
-                    </Document> */}
         </div>
     );
 }

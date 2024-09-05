@@ -55,7 +55,7 @@ export default function Home() {
 					</div>
 					<div className='upload'>
 						<h3>Upload PDF file</h3>
-						<input type="file" onChange={handleFileChange} />
+						<input type="file" accept="application/pdf" onChange={handleFileChange} />
 					</div>
 					<div className='PDFViewer'>
 						{file && <Main file={file}/>}
