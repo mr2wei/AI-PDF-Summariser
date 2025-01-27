@@ -6,6 +6,7 @@
 }
 
 .pdf-container {
+    position: relative;
     flex: 1;
     background-color: var(--base-color);
     margin: 10px 0px 0px 0px;
@@ -23,43 +24,59 @@
 }
 
 .table-of-contents {
-    transition: border 0.2s, padding 0.05s, height 0.2s ease-in-out;
-    background-color: var(--base-color);
-    border: 4px solid var(--container-highlight-color);
-    border-top: 0px;
-    box-sizing: border-box;
-    border-radius: 0px 0px 8px 8px;
-    padding: 10px 15px;
-    font-size: 1.2rem;
-    overflow: auto;
-    height: calc(100% - 80px);
+    position: absolute;
+    top: 75px;
+    left: 30px;
+    max-width: calc(100% - 80px);
+    max-height: 85%;
+    background-color: var(--overlay-color);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1000;
+    padding: 12px 10px;
+    opacity: 0;
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+}
+
+.toc-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    height: 100%;
 }
 
 .toc-item {
-    padding: 8px 12px 8px 24px;
+    padding: 6px 16px 6px 8px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    transition: all 0.2s ease-out;
 }
 
 .toc-highlight {
-    background-color: var(--container-highlight-color);
-    border-radius: 8px;
+    border: 1px solid var(--button-highlight-color);
 }
 
 .toc-section-header {
-    opacity: 0.6;
     font-weight: bold;
-    padding: 8px 12px 8px 12px;
+    opacity: 0.9;
 }
 
+.table-of-contents.visible {
+    opacity: 1;
+    visibility: visible;
+    backdrop-filter: blur(40px);
+}
 
 .pdf {
-    overflow-y: auto;
-    height: 92%;
-    transition: height 0.2s ease-in-out;
+    width: 100%;
+    height: 95%;
+    overflow-y: scroll;
+    overflow-x: hidden;
 }
-
 
 .pdf-controls {
     display: flex; /* Set the container to flexbox layout */
@@ -72,6 +89,7 @@
     padding: 6px;
     background-color: var(--container-highlight-color);
     border-radius: 8px 8px 0px 0px;
+    height: 45px;
 }
 
 .jump-button {

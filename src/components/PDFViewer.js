@@ -70,20 +70,8 @@ export default function PDFViewer(props) {
     }, [props.file]);
     
     const toggleTableOfContents = () => {
-        // if table of contents is open, close it
-        if (showTableOfContents) {
-            setShowTableOfContents(!showTableOfContents);
-            setTimeout(() => {
-                setShowPDF(!showPDF);
-            }, 250);
-        } else {
-            setShowPDF(!showPDF);
-            setTimeout(() => {
-                setShowTableOfContents(!showTableOfContents);
-            }, 250);
-        }
-        return;
-    }
+        setShowTableOfContents(!showTableOfContents);
+    };
     
 
     const onDocumentLoadSuccess = ({ numPages }) => {
@@ -172,18 +160,21 @@ export default function PDFViewer(props) {
                 
                 <div className="control-padding"></div>
             </div>
-            <div className={`table-of-contents ${showTableOfContents ? "" : "hidden"}`}>
-                {outline.map((item, index) => {
-                    return (
-                        <div 
-                            key={index} 
-                            className={`toc-item ${item.pageNumber ? "" : "toc-section-header"} ${currentSection == item.title ? "toc-highlight" : ""}`} 
-                            onClick={() => item.pageNumber && props.setPageNumber(item.pageNumber) && toggleTableOfContents()}
-                        >
-                            {item.title}
-                        </div>
-                    );
-                })}
+            <div className={`table-of-contents ${showTableOfContents ? "visible" : ""}`}>
+                <div className = "toc-container">
+                    {outline.map((item, index) => {
+                        return (
+                            <div 
+                                key={index} 
+                                className={`toc-item ${item.pageNumber ? "" : "toc-section-header"} ${currentSection == item.title ? "toc-highlight" : ""}`} 
+                                id = {`${item.pageNumber ? "hoverable" : ""}`}
+                                onClick={() => item.pageNumber && props.setPageNumber(item.pageNumber) && toggleTableOfContents()}
+                            >
+                                {item.title}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
             <div className={`pdf ${showPDF ? "": "hidden"}`}>
                 <ReactResizeDetector handleWidth handleHeight>

@@ -3,6 +3,10 @@
   --dark-base-color: #3b3e3f;
   --base-color: var(--light-base-color);
 
+  --light-overlay-color: hsl(210, 4%, 90%, 0.9);
+  --dark-overlay-color: hsla(195, 3%, 24%, 0.9);
+  --overlay-color: var(--light-overlay-color);
+
   --light-container-highlight-color : #BECEEB;
   --dark-container-highlight-color : #65706D;
   --container-highlight-color: var(--light-container-highlight-color);
@@ -22,6 +26,7 @@
 @media (prefers-color-scheme: dark){
   :root {
     --base-color: var(--dark-base-color);
+    --overlay-color: var(--dark-overlay-color);
     --container-highlight-color: var(--dark-container-highlight-color);
     --button-highlight-color: var(--dark-button-highlight-color);
     --bot-message-color: var(--dark-bot-message-color);
