@@ -100,13 +100,56 @@ export default function PDFViewer(props) {
     };
 
     const onPageLoadSuccess = (page) => {
-        page.getTextContent().then((textContent) => {
-            let text = "";
-            textContent.items.forEach((item) => {
-                text += item.str + " ";
-            });
+        extractPageText(page).then(text => {
             props.setPageText(text);
+        }).catch(error => {
+            console.error('Error extracting text:', error);
+            props.setPageText('');
         });
+    };
+
+    const extractPageText = async (page) => {
+        try {
+            const textContent = await page.getTextContent();
+            
+            // Group text items by their y-position to identify lines
+            const textItems = textContent.items;
+            const lines = {};
+            
+            textItems.forEach(item => {
+                // Round the y-position to account for slight variations
+                const yPos = Math.round(item.transform[5]);
+                
+                if (!lines[yPos]) {
+                    lines[yPos] = [];
+                }
+                
+                // Sort by x-position to maintain word order
+                lines[yPos].push({
+                    text: item.str,
+                    x: item.transform[4]
+                });
+            });
+            
+            // Sort lines by y-position (top to bottom)
+            const sortedYPositions = Object.keys(lines).map(Number).sort((a, b) => b - a);
+            
+            // Build the final text
+            let extractedText = '';
+            sortedYPositions.forEach(yPos => {
+                // Sort words in a line by x-position (left to right)
+                const lineItems = lines[yPos].sort((a, b) => a.x - b.x);
+                
+                // Join all words in this line
+                const lineText = lineItems.map(item => item.text).join(' ');
+                extractedText += lineText + '\n';
+            });
+            
+            return extractedText;
+        } catch (error) {
+            console.error('Error in text extraction:', error);
+            return '';
+        }
     };
 
     const goToPreviousPage = (event) => {
