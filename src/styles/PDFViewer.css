@@ -1,55 +1,150 @@
 .container {
     display: flex;
-    height: 95vh; 
-    margin-bottom: 20px;
+    height: 95vh;
+    align-items: stretch;
+    gap: 20px;
 }
 
 .pdf-container {
+    position: relative;
     flex: 1;
-    background-color: var(--nav-color);
-    margin: 10px 10px 0px 0px;
-    background-color: var(--nav-color);
-    padding: 1.5%;
-    border-radius: calc(10px + 1.1vw);
-    width: min-content;
+    background-color: var(--base-color);
+    margin: 10px 0px 0px 0px;
+    padding: 20px;
+    border-radius: 18px;
+    max-width: 45%;
 }
 
-button {
-    margin: 0 1.3% 2% 0;
-    border: 0;
-    border-radius: calc(8px + 0.3vw);
-    padding: 1.2% 1.5%;
-    background-color: var(--container-highlight-color);
-    font-size: calc(9px + 0.8vw);
-    color: inherit;
+.hidden {
+    height: 0 !important;
+    overflow: hidden !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: 0 !important;
+}
+
+.table-of-contents {
+    position: absolute;
+    top: 75px;
+    left: 30px;
+    max-width: calc(100% - 80px);
+    max-height: 85%;
+    background-color: var(--overlay-color);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1000;
+    padding: 12px 10px;
+    opacity: 0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.toc-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.toc-item {
+    padding: 6px 16px 6px 8px;
+    box-sizing: border-box;
+    border-radius: 8px;
     transition: all 0.2s ease-out;
 }
 
-button:disabled {
-    opacity: 0.4;
+.toc-highlight {
+    border: 1px solid var(--button-highlight-color);
 }
 
+.toc-section-header {
+    font-weight: bold;
+    opacity: 0.9;
+}
+
+.table-of-contents.visible {
+    opacity: 1;
+    visibility: visible;
+    backdrop-filter: blur(40px);
+}
+
+.pdf {
+    width: 100%;
+    height: 95%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.pdf-controls {
+    display: flex;
+    /* Set the container to flexbox layout */
+    justify-content: space-between;
+    /* This will place space evenly between child elements */
+    align-items: center;
+    /* This will vertically center-align child elements */
+    padding: 0px;
+    box-sizing: border-box;
+    /* This ensures that padding is included in total width */
+    width: 100%;
+    /* Set the width to 100% of its parent */
+    gap: 10px;
+    padding: 6px;
+    background-color: var(--container-highlight-color);
+    border-radius: 8px 8px 0px 0px;
+    height: 45px;
+}
+
+.jump-button {
+    margin-right: 0;
+}
+
+.page-indicator {
+    display: flex;
+    flex-direction: row;
+    font-size: 1.4rem;
+    align-items: center;
+    gap: 10px;
+    text-wrap: nowrap;
+    padding: 0px 12px;
+}
+
+.control-padding {
+    flex-grow: 1;
+}
+
+.pdf-controls .input-page {
+    border-radius: 8px;
+    padding: 6px 8px;
+    background-color: var(--container-highlight-color);
+    font-size: 1.4rem;
+    color: inherit;
+    transition: all 0.2s ease-out;
+    border: 1px solid var(--text-color);
+    max-width: 50px;
+    flex-shrink: 1;
+}
+
+.pdf-controls .input-page::placeholder {
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.page-control {
+    width: 45px;
+    justify-content: center;
+    align-items: center;
+}
 
 .text-container {
     flex: 1;
-    background-color: var(--nav-color);
-    margin: 10px 0px 0px 10px;
-    background-color: var(--nav-color);
-    padding: 1.5%;
-    border-radius: calc(10px + 1.1vw);
-    width: auto;
-}
-
-.pdf-container input {
-    margin: 0 1.3% 2% 0;
-    border: 0;
-    border-radius: calc(8px + 0.3vw);
-    padding: 1.2% 1.5%;
-    background-color: var(--container-highlight-color);
-    font-size: calc(10px + 0.8vw);
-    color: inherit;
-    transition: all 0.2s ease-out;
-    width: 10%;
+    background-color: var(--base-color);
+    margin: 10px 0px 0px 0px;
+    padding: 20px;
+    border-radius: 18px;
+    max-width: 60%;
 }
 
 #hoverable:hover {
