@@ -28,7 +28,7 @@ export default function PDFViewer(props) {
             const pdf = await loadingTask.promise;
             const outline = await pdf.getOutline();
             setOutline(outline.map(item => ({ title: item.title, pageNumber: null })));
-    
+
             // Resolve each destination to find the page numbers
             for (let item of outline) {
                 if (item.dest && Array.isArray(item.dest) && item.dest.length > 0) {
@@ -38,8 +38,8 @@ export default function PDFViewer(props) {
                         if (pageRef && typeof pageRef === 'object' && 'num' in pageRef) {
                             const pageNumber = await pdf.getPageIndex(pageRef) + 1;
                             // console.log(`Chapter '${item.title}' starts on page: ${pageNumber}`);
-            
-                            setOutline(prevOutline => prevOutline.map(ot => 
+
+                            setOutline(prevOutline => prevOutline.map(ot =>
                                 ot.title === item.title ? { ...ot, pageNumber } : ot
                             ));
                         }
@@ -48,13 +48,13 @@ export default function PDFViewer(props) {
                     }
                 }
             }
-            
+
         } catch (error) {
             console.error('Error loading PDF:', error);
         }
         console.log(outline)
     };
-    
+
     useEffect(() => {
         props.setPageNumber(1);
         if (props.file && props.file instanceof File) {
@@ -68,11 +68,11 @@ export default function PDFViewer(props) {
             reader.readAsArrayBuffer(props.file);
         }
     }, [props.file]);
-    
+
     const toggleTableOfContents = () => {
         setShowTableOfContents(!showTableOfContents);
     };
-    
+
 
     const onDocumentLoadSuccess = ({ numPages }) => {
         setNumPages(numPages);
@@ -128,16 +128,16 @@ export default function PDFViewer(props) {
     return (
         <div className="pdf-container">
             <div className="pdf-controls">
-                <button 
-                    className="page-control" 
-                    id="hoverable" 
+                <button
+                    className="page-control"
+                    id="hoverable"
                     onClick={() => toggleTableOfContents()}
                     disabled={outline.length === 0}
                 >
                     <FontAwesomeIcon icon={faBars} />
                 </button>
                 <div className="page-indicator">
-                    Page 
+                    Page
                     <input
                         className="input-page"
                         type="text"
@@ -157,17 +157,17 @@ export default function PDFViewer(props) {
                 <button onClick={goToNextPage} id="hoverable" disabled={props.pageNumber === numPages} className="page-control">
                     <FontAwesomeIcon icon={faCaretRight} />
                 </button>
-                
+
                 <div className="control-padding"></div>
             </div>
             <div className={`table-of-contents ${showTableOfContents ? "visible" : ""}`}>
-                <div className = "toc-container">
+                <div className="toc-container">
                     {outline.map((item, index) => {
                         return (
-                            <div 
-                                key={index} 
-                                className={`toc-item ${item.pageNumber ? "" : "toc-section-header"} ${currentSection == item.title ? "toc-highlight" : ""}`} 
-                                id = {`${item.pageNumber ? "hoverable" : ""}`}
+                            <div
+                                key={index}
+                                className={`toc-item ${item.pageNumber ? "" : "toc-section-header"} ${currentSection === item.title ? "toc-highlight" : ""}`}
+                                id={`${item.pageNumber ? "hoverable" : ""}`}
                                 onClick={() => item.pageNumber && props.setPageNumber(item.pageNumber) && toggleTableOfContents()}
                             >
                                 {item.title}
@@ -176,7 +176,7 @@ export default function PDFViewer(props) {
                     })}
                 </div>
             </div>
-            <div className={`pdf ${showPDF ? "": "hidden"}`}>
+            <div className={`pdf ${showPDF ? "" : "hidden"}`}>
                 <ReactResizeDetector handleWidth handleHeight>
                     {({ width, height, targetRef }) => (
                         <div ref={targetRef}>

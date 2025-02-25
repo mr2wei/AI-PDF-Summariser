@@ -6,7 +6,7 @@ import { pdfjs } from 'react-pdf';
 
 export default class GPT {
     constructor(file, model) {
-        this.openai = new OpenAI({ apiKey: Cookies.get('apiKey'), dangerouslyAllowBrowser: true });
+        this.openai = new OpenAI({ apiKey: Cookies.get('togetherApiKey'), dangerouslyAllowBrowser: true, baseURL: "https://api.together.xyz/v1" });
         this.guidance = "You are a PDF aid. Your job is to use context from text given to answer the user's requests. For summaries, Your job is to provide a neat summary of key points and information from the text. please format the response using bullet points for each key point. If the user is asking about the content, prioritise answering with information given. Always use LaTeX for math.";
         this.model = model;
         pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
@@ -22,12 +22,12 @@ export default class GPT {
         console.log("setActivePDF");
         return new Promise((resolve, reject) => {
             const fileReader = new FileReader();
-    
+
             fileReader.onload = () => {
                 const arrayBuffer = fileReader.result;
                 const uint8Array = new Uint8Array(arrayBuffer);
                 const loadingTask = pdfjs.getDocument({ data: uint8Array });
-    
+
                 loadingTask.promise.then(pdf => {
                     this.file = pdf;
                     console.log(this.file);
@@ -37,11 +37,11 @@ export default class GPT {
                     reject(error); // Reject the promise with the error
                 });
             };
-    
+
             fileReader.onerror = () => {
                 reject(fileReader.error);
             };
-    
+
             fileReader.readAsArrayBuffer(file);
         });
     }
@@ -97,7 +97,7 @@ export default class GPT {
             return { message, openaiChatHistory, stream: null };
         };
     }
-    
+
     /**
      * Allows AI to call a function to get text from a specific page in the PDF. This allows for multiple pages to be used as context.
      * 
@@ -109,7 +109,7 @@ export default class GPT {
      * @returns 
      */
     smarterFetchChatCompletions = async (openaiChatHistory, pageText, pageNumber, userMessage, addPageCallChatBox) => {
-        
+
         const getPageTextFromPageNumber = async (pageNumber) => {
             // if pageNumber is out of range, return an error message
             if (pageNumber < 1 || pageNumber > this.file.numPages) {
@@ -124,7 +124,7 @@ export default class GPT {
             );
             return `Page ${pageNumber}: ${text}`;
         }
-    
+
 
         // add guidance message to the start of chat history
         if (pageText) {
@@ -167,12 +167,12 @@ export default class GPT {
         try {
             // console.log(getPageTextFromPageNumber(57))
             let response = await this.openai.chat.completions.create({
-                model: 'gpt-3.5-turbo-1106',
+                model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
                 messages: openaiChatHistory,
                 tools: tools,
             })
 
-            while (response.choices[0].finish_reason === "tool_calls"){
+            while (response.choices[0].finish_reason === "tool_calls") {
 
                 const assistant_message = response.choices[0].message;
                 assistant_message.content = JSON.stringify(assistant_message.tool_calls[0].function);
@@ -200,9 +200,9 @@ export default class GPT {
                     tools: tools,
                 })
 
-            } 
+            }
 
-            openaiChatHistory.push({ role: 'assistant', content: response.choices[0].message.content});
+            openaiChatHistory.push({ role: 'assistant', content: response.choices[0].message.content });
 
             console.log(response);
             // throw new Error("test");
@@ -229,7 +229,7 @@ export default class GPT {
         // add guidance message to the start of chat history
         openaiChatHistory.unshift({ role: 'system', content: this.guidance });
 
-        if (pageText){
+        if (pageText) {
             openaiChatHistory = openaiChatHistory.concat({ role: 'user', content: `from: ${pageText}. ${userMessage}.` })
         } else {
             openaiChatHistory = openaiChatHistory.concat({ role: 'user', content: userMessage });
@@ -271,10 +271,13 @@ export default class GPT {
 
     getSupportedModels = () => {
         return [
-            "gpt-4o-mini",
-            "gpt-3.5-turbo",
-            "gpt-4o",
-            "gpt-4-turbo",
+            "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+            "deepseek-ai/DeepSeek-V3",
+            "deepseek-ai/DeepSeek-R1",
+            "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+            "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+            "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo-128K"
         ];
     }
 

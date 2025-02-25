@@ -6,7 +6,7 @@ import '../styles/Home.css';
 
 export default function Home() {
 	const [file, setFile] = useState(null);
-	const [apiKey, setApiKey] = useState(Cookies.get('apiKey') || '');
+	const [apiKey, setApiKey] = useState(Cookies.get('togetherApiKey') || '');
 	const [isValidApiKey, setIsValidApiKey] = useState(false);
 	const [isInputValid, setIsInputValid] = useState(true);
 
@@ -21,11 +21,11 @@ export default function Home() {
 	};
 
 	const checkApiKey = async () => {
-		const openai = new OpenAI({ apiKey: apiKey, dangerouslyAllowBrowser: true });
+		const openai = new OpenAI({ apiKey: apiKey, dangerouslyAllowBrowser: true, baseURL: "https://api.together.xyz/v1" });
 		try {
 			await openai.models.list();
 			setIsValidApiKey(true);
-			Cookies.set('apiKey', apiKey);
+			Cookies.set('togetherApiKey', apiKey);
 			return true;
 		} catch (error) {
 			setIsValidApiKey(false);
@@ -50,7 +50,7 @@ export default function Home() {
 						<button id="hoverable" onClick={() => {
 							setIsValidApiKey(false);
 							setApiKey('');
-							Cookies.remove('apiKey');
+							Cookies.remove('togetherApiKey');
 						}}>Change API key</button>
 					</div>
 					<div className='upload'>
@@ -58,40 +58,40 @@ export default function Home() {
 						<input type="file" accept="application/pdf" onChange={handleFileChange} />
 					</div>
 					<div className='PDFViewer'>
-						{file && <Main file={file}/>}
+						{file && <Main file={file} />}
 					</div>
 				</>
 			) : (
-					<div className="APIKey">
-						<h3>Enter your OpenAI API key</h3>
-						<button 
+				<div className="APIKey">
+					<h3>Enter your Together.ai API key</h3>
+					{/* <button 
 							id="hoverable"
 							onClick={() => window.open("https://www.howtogeek.com/885918/how-to-get-an-openai-api-key/")}>How to get an API Key
-						</button>
-						<div className="APIKey-form">
-							<input
-								className={isInputValid ? "" : "invalid"}
-								type="text"
-								value={apiKey}
-								onChange={handleApiKeyChange}
-								placeholder="Enter your API key"
-								id="hoverable"
-								onKeyDown={(event) => {
-									if (event.key === "Enter") {
-										checkApiKey();
-									}
-								}}
-							/>
-							<button
-								id="hoverable"
-								onClick={() => {
+						</button> */}
+					<div className="APIKey-form">
+						<input
+							className={isInputValid ? "" : "invalid"}
+							type="text"
+							value={apiKey}
+							onChange={handleApiKeyChange}
+							placeholder="Enter your API key"
+							id="hoverable"
+							onKeyDown={(event) => {
+								if (event.key === "Enter") {
 									checkApiKey();
-								}}
-							>Enter</button>
-							{!isInputValid && <p className="error">Invalid API key</p>}
-						</div>
+								}
+							}}
+						/>
+						<button
+							id="hoverable"
+							onClick={() => {
+								checkApiKey();
+							}}
+						>Enter</button>
+						{!isInputValid && <p className="error">Invalid API key</p>}
 					</div>
-        )}
+				</div>
+			)}
 		</div>
 	);
 }

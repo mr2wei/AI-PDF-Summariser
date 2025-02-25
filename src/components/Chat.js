@@ -38,6 +38,19 @@ export default function Chat(props) {
         setLoading(false);
     }, [props.file, model]);
 
+    useEffect(() => {
+        // if the current pageContextCycle is +, set the model to meta-llama/Llama-3.3-70B-Instruct-Turbo
+        if (usePageText === "+") {
+            setModel("meta-llama/Llama-3.3-70B-Instruct-Turbo");
+        }
+    }, [usePageText]);
+
+    useEffect(() => {
+        // if current pageContextCycle is + and user changes the model, set pageContextCycle to -
+        if (usePageText === "+" && model !== "meta-llama/Llama-3.3-70B-Instruct-Turbo") {
+            setUsePageText("-");
+        }
+    }, [model]);
 
     /**
      * Scroll to the bottom of the chat
@@ -65,7 +78,8 @@ export default function Chat(props) {
             setOpenaiChatHistory={setOpenaiChatHistory}
             setIsGenerating={setIsGenerating}
             scrollToBottom={scrollToBottom}
-            key={chatHistory.length}
+            messageKey={chatHistory.length}
+            model={model}
         />));
 
     };
@@ -79,8 +93,9 @@ export default function Chat(props) {
                 isBot={true}
                 text="Reading the PDF page"
                 scrollToBottom={scrollToBottom}
-                key={chatHistory.length}
+                messageKey={chatHistory.length}
                 thought={true}
+                model={model}
             />
         ));
     }
@@ -96,8 +111,9 @@ export default function Chat(props) {
                 isBot={true}
                 text={`Reading from page ${page} of the PDF`}
                 scrollToBottom={scrollToBottom}
-                key={chatHistory.length}
+                messageKey={chatHistory.length}
                 thought={true}
+                model={model}
             />
         ));
     }
@@ -120,7 +136,8 @@ export default function Chat(props) {
                 isBot={false}
                 text={userText}
                 scrollToBottom={scrollToBottom}
-                key={chatHistory.length}
+                messageKey={chatHistory.length}
+                model={model}
             />
         ));
 
@@ -147,7 +164,8 @@ export default function Chat(props) {
                 setOpenaiChatHistory={setOpenaiChatHistory}
                 setIsGenerating={setIsGenerating}
                 scrollToBottom={scrollToBottom}
-                key={chatHistory.length}
+                messageKey={chatHistory.length}
+                model={model}
             />
         ]));
     };
@@ -257,7 +275,7 @@ export default function Chat(props) {
             </div>
             <div className="additional-chat-elements">
                 <select
-                    className="mode-selector"
+                    className="model-selector"
                     value={model}
                     onChange={(event) => {
                         setModel(event.target.value);
@@ -271,13 +289,13 @@ export default function Chat(props) {
                         </option>
                     ))}
                 </select>
-                <div className="alert">
+                {/* <div className="alert">
                     {(model === "gpt-4-1106-preview" || model === "gpt-4") && (
                         <FontAwesomeIcon icon={faExclamationCircle} className="alert-icon" />
                     )}
                     {model === "gpt-4-1106-preview" && " certain features may not work with the selected model"}
                     {model === "gpt-4" && " while smarter, the usage cost for this model is expensive. use with caution"}
-                </div>
+                </div> */}
             </div>
         </div>
     );

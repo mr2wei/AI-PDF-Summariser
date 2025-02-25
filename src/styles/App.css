@@ -1,36 +1,46 @@
 :root {
-  --light-base-color: #e4e5e6;
-  --dark-base-color: #3b3e3f;
+  --light-base-color: hsl(195, 13%, 94%);
+  --dark-base-color: hsl(195, 3%, 18%);
   --base-color: var(--light-base-color);
 
   --light-overlay-color: hsl(210, 4%, 90%, 0.9);
   --dark-overlay-color: hsla(195, 3%, 24%, 0.9);
   --overlay-color: var(--light-overlay-color);
 
-  --light-container-highlight-color : #BECEEB;
-  --dark-container-highlight-color : #65706D;
+  --light-container-highlight-color: hsl(219, 53%, 90%);
+  --dark-container-highlight-color: hsl(164, 5%, 34%);
   --container-highlight-color: var(--light-container-highlight-color);
 
-  --light-button-highlight-color : #cdbed6;
-  --dark-button-highlight-color : #9EB0AB;
+  --light-button-highlight-color: hsl(219, 53%, 80%);
+  --dark-button-highlight-color: hsl(164, 5%, 44%);
   --button-highlight-color: var(--light-button-highlight-color);
 
-  --user-message-color: #d8dbf2;
+  --dark-text-color: hsl(195, 3%, 92%);
+  --light-text-color: hsl(195, 3%, 15%);
 
-  --dark-background-color: #313435;
-  --light-background-color: #eef1f2;
+  --dark-user-message-color: hsl(195, 3%, 90%);
+  --light-user-message-color: hsl(219, 53%, 90%);
+  --user-message-color: var(--light-user-message-color);
 
-  --text-color: var(--dark-background-color);
+  --user-text-color: var(--light-text-color);
+
+  --dark-code-bg-color: hsl(195, 4%, 14%);
+  --light-code-bg-color: hsl(195, 13%, 88%);
+  --code-bg-color: var(--light-code-bg-color);
+
+  --text-color: var(--light-text-color);
 }
 
-@media (prefers-color-scheme: dark){
+@media (prefers-color-scheme: dark) {
   :root {
     --base-color: var(--dark-base-color);
     --overlay-color: var(--dark-overlay-color);
     --container-highlight-color: var(--dark-container-highlight-color);
     --button-highlight-color: var(--dark-button-highlight-color);
     --bot-message-color: var(--dark-bot-message-color);
-    --text-color: var(--light-background-color);
+    --code-bg-color: var(--dark-code-bg-color);
+    --text-color: var(--dark-text-color);
+    --user-message-color: var(--dark-user-message-color);
   }
 }
 
@@ -40,6 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-color);
 }
 
 #content {
