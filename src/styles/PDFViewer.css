@@ -1,6 +1,6 @@
 .container {
     display: flex;
-    height: 95vh; 
+    height: 95vh;
     align-items: stretch;
     gap: 20px;
 }
@@ -79,12 +79,17 @@
 }
 
 .pdf-controls {
-    display: flex; /* Set the container to flexbox layout */
-    justify-content: space-between; /* This will place space evenly between child elements */
-    align-items: center; /* This will vertically center-align child elements */
-    padding: 0px; 
-    box-sizing: border-box; /* This ensures that padding is included in total width */
-    width: 100%; /* Set the width to 100% of its parent */
+    display: flex;
+    /* Set the container to flexbox layout */
+    justify-content: space-between;
+    /* This will place space evenly between child elements */
+    align-items: center;
+    /* This will vertically center-align child elements */
+    padding: 0px;
+    box-sizing: border-box;
+    /* This ensures that padding is included in total width */
+    width: 100%;
+    /* Set the width to 100% of its parent */
     gap: 10px;
     padding: 6px;
     background-color: var(--container-highlight-color);
@@ -111,7 +116,7 @@
 }
 
 .pdf-controls .input-page {
-    border-radius:8px;
+    border-radius: 8px;
     padding: 6px 8px;
     background-color: var(--container-highlight-color);
     font-size: 1.4rem;

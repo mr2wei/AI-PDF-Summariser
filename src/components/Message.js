@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import MarkdownRender from '../utils/MarkdownRender.js';
 
 
-export default function Message(props){ 
+export default function Message(props) {
     const [textContent, setTextContent] = useState("");
     const [completed, setCompleted] = useState(false); // so that it doesn't fetch completions more than once
 
@@ -28,7 +28,7 @@ export default function Message(props){
         const fetchData = async () => {
             if (props.isBot && !completed) {
                 setCompleted(true);
-                if (props.stream){
+                if (props.stream) {
                     let result = '';
                     for await (const part of props.stream) {
                         const deltaContent = part.choices[0]?.delta?.content || '';
@@ -39,7 +39,7 @@ export default function Message(props){
                     props.setIsGenerating(false);
                     props.setOpenaiChatHistory(props.openaiChatHistory.concat({ role: 'assistant', content: result }));
                 } else {
-                    if (!props.text){
+                    if (!props.text) {
                         setTextContent("Sorry, there was an unexpected error.");
                     } else {
                         setTextContent(props.text);
@@ -56,16 +56,16 @@ export default function Message(props){
             window.MathJax && window.MathJax.typesetPromise();
 
         };
-    
+
         fetchData().catch(console.error);
 
     }, [completed, props.isBot, props.text, props.stream, props.setIsGenerating, props.setOpenaiChatHistory, props.scrollToBottom]);
 
     return (
-        <div className={props.isBot? "bot-message-container" : "user-message-container"} >
-            <div className={props.isBot? "bot-message" : "user-message"} id = {props.thought? "thought" : "message"}>
+        <div className={props.isBot ? "bot-message-container" : "user-message-container"} >
+            <div className={props.isBot ? "bot-message" : "user-message"} id={props.thought ? "thought" : "message"}>
                 {!props.thought && <div className="author">
-                    {props.isBot? "AI ✨" : "User"}
+                    {props.isBot ? "AI ✨" : "User"}
                 </div>}
                 <MarkdownRender key={props.key}>
                     {adaptLatex(textContent)}

@@ -7,18 +7,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faTrash, faStop, faExclamationCircle, faFileCircleXmark, faFileCircleMinus, faFileCirclePlus } from '@fortawesome/free-solid-svg-icons';
 
 
-export default function Chat(props){
+export default function Chat(props) {
 
     const [model, setModel] = useState(""); // the model to use for generating completions
     const [pageText, setPageText] = useState(""); // the text of the current pdf page
     const [chatHistory, setChatHistory] = useState([]); // the chat history to be shown. This is an array of Message components.
     const [isGenerating, setIsGenerating] = useState(true); // whether the model is currently generating completions
     const [userMessage, setUserMessage] = useState(""); // the message the user is currently typing
-    const [openaiChatHistory,setOpenaiChatHistory] = useState([]); // the chat history to be sent to OpenAI. This is an array of objects with role and content keys.
+    const [openaiChatHistory, setOpenaiChatHistory] = useState([]); // the chat history to be sent to OpenAI. This is an array of objects with role and content keys.
     const [usePageText, setUsePageText] = useState("-"); // whether to use the page text as context. "-" means use current page as context, "+" means use multiple pages as context, "x" means don't use page text as context
     const [animatingButton, setAnimatingButton] = useState(null); // the button that is currently animating
     const [loading, setLoading] = useState(true); // whether the page is currently loading (initialising the GPT object)
-    
+
     const pageContextCycles = ["-", "+", "x"]; // the possible values for usePageText
 
     const messageRef = useRef(null); // reference to the message container div. Used to scroll to the bottom of the chat
@@ -33,7 +33,7 @@ export default function Chat(props){
         gptUtils.current.setModel(model);
         supportedModels.current = gptUtils.current.getSupportedModels();
         // if the model is not set, set it to the first supported model.
-        (model === "" && setModel(supportedModels.current[0]));   
+        (model === "" && setModel(supportedModels.current[0]));
         setIsGenerating(false);
         setLoading(false);
     }, [props.file, model]);
@@ -67,7 +67,7 @@ export default function Chat(props){
             scrollToBottom={scrollToBottom}
             key={chatHistory.length}
         />));
-        
+
     };
 
     /**
@@ -80,7 +80,7 @@ export default function Chat(props){
                 text="Reading the PDF page"
                 scrollToBottom={scrollToBottom}
                 key={chatHistory.length}
-                thought = {true}
+                thought={true}
             />
         ));
     }
@@ -97,7 +97,7 @@ export default function Chat(props){
                 text={`Reading from page ${page} of the PDF`}
                 scrollToBottom={scrollToBottom}
                 key={chatHistory.length}
-                thought = {true}
+                thought={true}
             />
         ));
     }
@@ -112,7 +112,7 @@ export default function Chat(props){
         if (userMessage === "\n") return;
 
         const userText = userMessage;
-    
+
         setUserMessage("");
 
         setChatHistory(prevChatHistory => prevChatHistory.concat(
@@ -137,7 +137,7 @@ export default function Chat(props){
         const { message, updatedChatHistory, stream } = await gptUtils.current.fetchChatCompletions(openaiChatHistory, pageContext, props.pageNumber, userText, useFunctionCalling, addPageCallChatBox);
 
         setOpenaiChatHistory(updatedChatHistory);
-    
+
         setChatHistory(prevChatHistory => prevChatHistory.concat([
             <Message
                 isBot={true}
@@ -170,6 +170,7 @@ export default function Chat(props){
             props.scrollRef.current.scrollIntoView({ behavior: "smooth" });
         }
         setPageText(props.text);
+        scrollToBottom(); // Scroll to bottom when page text changes
     }, [props.text, props.scrollRef]);
 
     /**
@@ -180,12 +181,12 @@ export default function Chat(props){
             <div>Loading</div>
         );
     }
-        
+
 
     return (
         <div className="chat">
             <div className="top-chat-elements">
-                
+
                 <button
                     className="generate"
                     id="hoverable"
@@ -226,8 +227,8 @@ export default function Chat(props){
                     }}
                     title={usePageText === "-" ? "Use page text as context" : usePageText === "+" ? "Use multiple pages as context" : "Do not use page text as context"}
                 >
-                    <FontAwesomeIcon 
-                        icon={usePageText === "-" ? faFileCircleMinus : usePageText === "+" ? faFileCirclePlus : faFileCircleXmark} 
+                    <FontAwesomeIcon
+                        icon={usePageText === "-" ? faFileCircleMinus : usePageText === "+" ? faFileCirclePlus : faFileCircleXmark}
                         className={animatingButton === 'context' ? 'pulse-animation' : ''}
                     />
                 </button>
@@ -249,9 +250,9 @@ export default function Chat(props){
                         setOpenaiChatHistory([]);
                         setIsGenerating(false);
                     }}
-                    title = {isGenerating? "Stop generating" : "Clear chat"}
+                    title={isGenerating ? "Stop generating" : "Clear chat"}
                 >
-                    <FontAwesomeIcon icon={isGenerating? faStop : faTrash} className={animatingButton === 'clear' ? 'pulse-animation' : ''} />
+                    <FontAwesomeIcon icon={isGenerating ? faStop : faTrash} className={animatingButton === 'clear' ? 'pulse-animation' : ''} />
                 </button>
             </div>
             <div className="additional-chat-elements">
