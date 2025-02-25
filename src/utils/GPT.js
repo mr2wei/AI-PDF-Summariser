@@ -271,13 +271,13 @@ export default class GPT {
 
     getSupportedModels = () => {
         return [
-            "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
-            "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-            "deepseek-ai/DeepSeek-V3",
+            "deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free",
+            "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
             "deepseek-ai/DeepSeek-R1",
+            "deepseek-ai/DeepSeek-V3",
+            "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
             "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-            "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
-            "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo-128K"
+            "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
         ];
     }
 

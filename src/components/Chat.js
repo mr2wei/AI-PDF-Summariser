@@ -18,6 +18,7 @@ export default function Chat(props) {
     const [usePageText, setUsePageText] = useState("-"); // whether to use the page text as context. "-" means use current page as context, "+" means use multiple pages as context, "x" means don't use page text as context
     const [animatingButton, setAnimatingButton] = useState(null); // the button that is currently animating
     const [loading, setLoading] = useState(true); // whether the page is currently loading (initialising the GPT object)
+    const [isAtBottom, setIsAtBottom] = useState(true); // track if user is at bottom of chat
 
     const pageContextCycles = ["-", "+", "x"]; // the possible values for usePageText
 
@@ -53,13 +54,37 @@ export default function Chat(props) {
     }, [model]);
 
     /**
-     * Scroll to the bottom of the chat
+     * Scroll to the bottom of the chat only if user was already near the bottom
      */
     const scrollToBottom = () => {
-        if (messageRef.current) {
+        if (messageRef.current && isAtBottom) {
             messageRef.current.scrollTop = messageRef.current.scrollHeight;
         }
     };
+
+    /**
+     * Check if the user is currently near the bottom of the chat
+     */
+    const checkIfAtBottom = () => {
+        if (messageRef.current) {
+            // console.log("checking if at bottom");
+            const { scrollTop, scrollHeight, clientHeight } = messageRef.current;
+            // Consider "at bottom" if user is within 30px of the bottom
+            const atBottom = scrollHeight - scrollTop - clientHeight < 30;
+            setIsAtBottom(atBottom);
+        }
+    };
+
+    // Setup scroll event listener
+    useEffect(() => {
+        const messagesContainer = messageRef.current;
+        if (messagesContainer) {
+            messagesContainer.addEventListener('scroll', checkIfAtBottom);
+            return () => {
+                messagesContainer.removeEventListener('scroll', checkIfAtBottom);
+            };
+        }
+    }, []);
 
     /**
      * Generate a summary of the page text
@@ -188,7 +213,12 @@ export default function Chat(props) {
             props.scrollRef.current.scrollIntoView({ behavior: "smooth" });
         }
         setPageText(props.text);
-        scrollToBottom(); // Scroll to bottom when page text changes
+
+        // Commenting out the forced scroll to bottom
+        // // Force scroll to bottom when page text changes, regardless of isAtBottom
+        // if (messageRef.current) {
+        //     messageRef.current.scrollTop = messageRef.current.scrollHeight;
+        // }
     }, [props.text, props.scrollRef]);
 
     /**

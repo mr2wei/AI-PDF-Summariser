@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import MarkdownRender from '../utils/MarkdownRender.js';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faChevronRight, faCopy, faGear } from "@fortawesome/free-solid-svg-icons";
 
 /**
  * Message component that renders both user and AI messages with markdown and LaTeX support
@@ -62,7 +62,7 @@ export default function Message(props) {
 
                 // Only show thinking if there's content
                 const hasThinkingContent = lastThinkingContent.length > 0;
-                setThinking(hasThinkingContent);
+                setThinking(false);
                 setDidThink(hasThinkingContent);
             } else {
                 // Check if we're in the middle of a thinking block
@@ -133,6 +133,11 @@ export default function Message(props) {
             <div className={props.isBot ? "bot-message" : "user-message"} id={props.thought ? "thought" : "message"}>
                 {!props.thought && <div className="author">
                     {props.isBot ? "AI ✨" : "User"}
+                    {props.isBot && (
+                        <button className="copy-button" onClick={() => navigator.clipboard.writeText(didThink ? responseText : textContent)}>
+                            Copy <FontAwesomeIcon icon={faCopy} />
+                        </button>
+                    )}
                 </div>}
 
                 {props.isBot && didThink && (
@@ -141,7 +146,9 @@ export default function Message(props) {
                             className="toggle-thinking"
                             onClick={() => setShowThinking(!showThinking)}
                         >
-                            Reasoning <FontAwesomeIcon icon={faChevronRight} className={showThinking ? "rotate-90" : ""} />
+                            Reasoning
+                            {thinking && <FontAwesomeIcon icon={faGear} className="thinking-gear spinning" />}
+                            <FontAwesomeIcon icon={faChevronRight} className={showThinking ? "rotate-90" : ""} />
                         </button>
 
                         <div className={`reasoning-content ${showThinking ? "visible" : ""}`} id="reasoning">
@@ -155,6 +162,8 @@ export default function Message(props) {
                 <MarkdownRender key={props.messageKey}>
                     {adaptLatex(props.isBot && props.model.includes("DeepSeek-R1") ? responseText : textContent)}
                 </MarkdownRender>
+
+
             </div>
         </div>
     );

@@ -26,33 +26,54 @@ export default function PDFViewer(props) {
         try {
             const loadingTask = pdfjs.getDocument({ data: fileData });
             const pdf = await loadingTask.promise;
-            const outline = await pdf.getOutline();
-            setOutline(outline.map(item => ({ title: item.title, pageNumber: null })));
+            const topLevelOutline = await pdf.getOutline();
 
-            // Resolve each destination to find the page numbers
-            for (let item of outline) {
-                if (item.dest && Array.isArray(item.dest) && item.dest.length > 0) {
-                    try {
-                        // The first element often contains a reference to the page object
-                        const pageRef = item.dest[0];
-                        if (pageRef && typeof pageRef === 'object' && 'num' in pageRef) {
-                            const pageNumber = await pdf.getPageIndex(pageRef) + 1;
-                            // console.log(`Chapter '${item.title}' starts on page: ${pageNumber}`);
+            // Process outline items and their children
+            const processedOutline = [];
 
-                            setOutline(prevOutline => prevOutline.map(ot =>
-                                ot.title === item.title ? { ...ot, pageNumber } : ot
-                            ));
+            const processItems = async (items, level = 0) => {
+                for (let item of items) {
+                    let pageNumber = null;
+
+                    // Try to resolve the destination to find the page number
+                    if (item.dest) {
+                        try {
+                            if (typeof item.dest === 'string') {
+                                const destination = await pdf.getDestination(item.dest);
+                                if (destination && Array.isArray(destination) && destination.length > 0) {
+                                    const pageRef = destination[0];
+                                    pageNumber = await pdf.getPageIndex(pageRef) + 1;
+                                }
+                            } else if (Array.isArray(item.dest) && item.dest.length > 0) {
+                                const pageRef = item.dest[0];
+                                if (pageRef && typeof pageRef === 'object' && 'num' in pageRef) {
+                                    pageNumber = await pdf.getPageIndex(pageRef) + 1;
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error resolving destination for:', item.title, error);
                         }
-                    } catch (error) {
-                        console.error('Error resolving destination for:', item.title, error);
+                    }
+
+                    processedOutline.push({
+                        title: item.title,
+                        pageNumber: pageNumber,
+                        level: level
+                    });
+
+                    // Process children recursively if they exist
+                    if (item.items && item.items.length > 0) {
+                        await processItems(item.items, level + 1);
                     }
                 }
-            }
+            };
+
+            await processItems(topLevelOutline);
+            setOutline(processedOutline);
 
         } catch (error) {
             console.error('Error loading PDF:', error);
         }
-        console.log(outline)
     };
 
     useEffect(() => {
@@ -167,6 +188,7 @@ export default function PDFViewer(props) {
                             <div
                                 key={index}
                                 className={`toc-item ${item.pageNumber ? "" : "toc-section-header"} ${currentSection === item.title ? "toc-highlight" : ""}`}
+                                style={{ paddingLeft: `${item.level * 15 + 10}px` }} // Add indentation based on level
                                 id={`${item.pageNumber ? "hoverable" : ""}`}
                                 onClick={() => item.pageNumber && props.setPageNumber(item.pageNumber) && toggleTableOfContents()}
                             >

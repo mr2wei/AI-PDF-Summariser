@@ -137,6 +137,24 @@ input:disabled {
     padding-left: 0;
 }
 
+.copy-button {
+    background-color: var(--container-highlight-color);
+    border: 0;
+    opacity: 0.8;
+    margin-left: 0.5em;
+    font-size: 1rem;
+    padding: 0.4em 0.6em;
+}
+
+.copy-button svg {
+    margin-left: 0.2em;
+}
+
+.copy-button:hover {
+    opacity: 1;
+    cursor: pointer;
+}
+
 .toggle-thinking svg {
     margin-left: 0.5em;
     transition: transform 0.15s ease;
@@ -261,4 +279,19 @@ input:disabled {
 
 .rotate-90 {
     transform: rotate(90deg);
+}
+
+.thinking-gear {
+    margin-left: 0.5em;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }

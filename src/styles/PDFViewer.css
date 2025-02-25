@@ -53,11 +53,12 @@
     padding: 6px 16px 6px 8px;
     box-sizing: border-box;
     border-radius: 8px;
-    transition: all 0.2s ease-out;
+    border: 2px solid transparent;
+    transition: background-color 0.2s ease;
 }
 
 .toc-highlight {
-    border: 1px solid var(--button-highlight-color);
+    border: 2px solid var(--button-highlight-color);
 }
 
 .toc-section-header {
