@@ -39,6 +39,9 @@ input:disabled {
     opacity: 0.75;
     margin-bottom: 1.2%;
     padding: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 #message p {
@@ -84,7 +87,7 @@ input:disabled {
     justify-content: flex-end;
     align-items: flex-end;
     padding: 1.5% 2.75% 1.5% 2.15%;
-
+    text-align: right;
 }
 
 .user-message-container {
@@ -112,7 +115,7 @@ input:disabled {
     margin-bottom: 0%;
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.5s ease-out, opacity 0.3s ease-out, margin 0.5s ease-out;
+    transition: max-height 0.3s ease-out, opacity 0.15s ease-out, margin 0.s ease-out;
     opacity: 0;
 }
 
@@ -137,20 +140,27 @@ input:disabled {
     padding-left: 0;
 }
 
-.copy-button {
+.action-button,
+.user-action-button {
     background-color: var(--container-highlight-color);
     border: 0;
     opacity: 0.8;
     margin-left: 0.5em;
-    font-size: 1rem;
+    font-size: 0.9rem;
     padding: 0.4em 0.6em;
 }
 
-.copy-button svg {
-    margin-left: 0.2em;
+.action-button:hover {
+    opacity: 1;
+    cursor: pointer;
 }
 
-.copy-button:hover {
+.user-action-button {
+    margin-right: 0.5em;
+    color: var(--dark-text-color)
+}
+
+.user-action-button:hover {
     opacity: 1;
     cursor: pointer;
 }
@@ -166,6 +176,7 @@ input:disabled {
     width: 100%;
     /* Ensure full width */
     margin-bottom: 2%;
+    gap: 0.5em;
 }
 
 .top-chat-elements button {

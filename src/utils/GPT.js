@@ -90,11 +90,11 @@ export default class GPT {
                 stream: true,
             });
 
-            return { message: "", openaiChatHistory, stream };
+            return { message: "", updatedChatHistory: openaiChatHistory, stream };
         } catch (error) {
             console.error(error);
             const message = `Sorry, I couldn't generate a summary at the moment.<br><code>{error}</code>`
-            return { message, openaiChatHistory, stream: null };
+            return { message, updatedChatHistory: openaiChatHistory, stream: null };
         };
     }
 
@@ -109,6 +109,8 @@ export default class GPT {
      * @returns 
      */
     smarterFetchChatCompletions = async (openaiChatHistory, pageText, pageNumber, userMessage, addPageCallChatBox) => {
+        // Create a deep copy of the chat history to avoid mutating the original
+        let chatHistory = JSON.parse(JSON.stringify(openaiChatHistory));
 
         const getPageTextFromPageNumber = async (pageNumber) => {
             // if pageNumber is out of range, return an error message
@@ -125,24 +127,25 @@ export default class GPT {
             return `Page ${pageNumber}: ${text}`;
         }
 
-
-        // add guidance message to the start of chat history
-        if (pageText) {
-            console.log(pageNumber)
-            openaiChatHistory.unshift({ role: 'system', content: `${this.guidance}. The user is on page ${pageNumber} of ${this.file.numPages}. Get text from other pages if more context is needed${pageText ? ', do not get the text content from the current page' : ''}.` });
-            openaiChatHistory = openaiChatHistory.concat({ role: 'user', content: `From page ${pageNumber}: ${pageText}. ${userMessage}.` });
-        } else {
-            openaiChatHistory.unshift({ role: 'system', content: `${this.guidance}. The user is on page ${pageNumber} of ${this.file.numPages}. Get text from other pages if more context is needed.` });
-            openaiChatHistory = openaiChatHistory.concat({ role: 'user', content: userMessage });
+        // Ensure we have a system message at the beginning, but don't add duplicates
+        if (chatHistory.length === 0 || chatHistory[0].role !== 'system') {
+            chatHistory.unshift({ role: 'system', content: `${this.guidance}. The user is on page ${pageNumber} of ${this.file.numPages}. Get text from other pages if more context is needed${pageText ? ', do not get the text content from the current page' : ''}.` });
         }
-        let tokens;
 
+        // Add the user message
+        if (pageText) {
+            chatHistory.push({ role: 'user', content: `From page ${pageNumber}: ${pageText}. ${userMessage}.` });
+        } else {
+            chatHistory.push({ role: 'user', content: userMessage });
+        }
+
+        let tokens;
         do {
-            tokens = await this.getMessageTokens(openaiChatHistory);
-            // remove the second message from the chat history (because the first is the guidance message)
-            if (openaiChatHistory.length > 2 && tokens > 4096) {
-                openaiChatHistory.splice(1, 1);
-            } else if (openaiChatHistory.length === 2 && tokens > 4096) {
+            tokens = await this.getMessageTokens(chatHistory);
+            // remove the oldest non-system message if we exceed token limit
+            if (chatHistory.length > 2 && tokens > 4096) {
+                chatHistory.splice(1, 1);
+            } else if (chatHistory.length === 2 && tokens > 4096) {
                 return false;
             }
         } while (tokens > 4096);
@@ -165,10 +168,9 @@ export default class GPT {
         ];
 
         try {
-            // console.log(getPageTextFromPageNumber(57))
             let response = await this.openai.chat.completions.create({
                 model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-                messages: openaiChatHistory,
+                messages: chatHistory,
                 tools: tools,
             })
 
@@ -176,7 +178,7 @@ export default class GPT {
 
                 const assistant_message = response.choices[0].message;
                 assistant_message.content = JSON.stringify(assistant_message.tool_calls[0].function);
-                openaiChatHistory.push(assistant_message);
+                chatHistory.push(assistant_message);
 
                 console.log(assistant_message)
 
@@ -185,32 +187,32 @@ export default class GPT {
                         const toolArgs = JSON.parse(toolCall.function.arguments);
                         const pageText = await getPageTextFromPageNumber(toolArgs.pageNumber);
                         addPageCallChatBox(toolArgs.pageNumber);
-                        openaiChatHistory.push({ role: 'tool', 'tool_call_id': toolCall.id, 'name': toolCall.function.name, 'content': pageText });
+                        chatHistory.push({ role: 'tool', 'tool_call_id': toolCall.id, 'name': toolCall.function.name, 'content': pageText });
                     } else {
                         console.error("Unknown tool call");
-                        openaiChatHistory.pop();
-                        return { message: "Unknown tool called by assistant.", openaiChatHistory, stream: null };
+                        chatHistory.pop();
+                        return { message: "Unknown tool called by assistant.", updatedChatHistory: chatHistory, stream: null };
                     }
                 }
 
                 // 2nd API call
                 response = await this.openai.chat.completions.create({
                     model: this.model,
-                    messages: openaiChatHistory,
+                    messages: chatHistory,
                     tools: tools,
                 })
 
             }
 
-            openaiChatHistory.push({ role: 'assistant', content: response.choices[0].message.content });
+            chatHistory.push({ role: 'assistant', content: response.choices[0].message.content });
 
             console.log(response);
             // throw new Error("test");
-            return { message: response.choices[0].message.content, openaiChatHistory, stream: null };
+            return { message: response.choices[0].message.content, updatedChatHistory: chatHistory, stream: null };
         } catch (error) {
             console.error(error);
             const message = `Sorry, I couldn't generate a response at the moment. \`\`\`${error}\`\`\``
-            return { message, openaiChatHistory, stream: null };
+            return { message, updatedChatHistory: chatHistory, stream: null };
         }
     }
 
@@ -226,22 +228,28 @@ export default class GPT {
             return this.smarterFetchChatCompletions(openaiChatHistory, pageText, pageNumber, userMessage, addPageCallChatBox);
         }
 
-        // add guidance message to the start of chat history
-        openaiChatHistory.unshift({ role: 'system', content: this.guidance });
+        // Create a deep copy of the chat history to avoid mutating the original
+        let chatHistory = JSON.parse(JSON.stringify(openaiChatHistory));
 
-        if (pageText) {
-            openaiChatHistory = openaiChatHistory.concat({ role: 'user', content: `from: ${pageText}. ${userMessage}.` })
-        } else {
-            openaiChatHistory = openaiChatHistory.concat({ role: 'user', content: userMessage });
+        // Ensure we have a system message at the beginning, but don't add duplicates
+        if (chatHistory.length === 0 || chatHistory[0].role !== 'system') {
+            chatHistory.unshift({ role: 'system', content: this.guidance });
         }
-        let tokens;
 
+        // Add the user message
+        if (pageText) {
+            chatHistory.push({ role: 'user', content: `Below is an excerpt from the PDF:\n\n${pageText}\n\nMy Query is:\n${userMessage}.` });
+        } else {
+            chatHistory.push({ role: 'user', content: userMessage });
+        }
+
+        let tokens;
         do {
-            tokens = await this.getMessageTokens(openaiChatHistory);
-            // remove the second message from the chat history (because the first is the guidance message)
-            if (openaiChatHistory.length > 2 && tokens > 4096) {
-                openaiChatHistory.splice(1, 1);
-            } else if (openaiChatHistory.length === 2 && tokens > 4096) {
+            tokens = await this.getMessageTokens(chatHistory);
+            // remove the oldest non-system message if we exceed token limit
+            if (chatHistory.length > 2 && tokens > 4096) {
+                chatHistory.splice(1, 1);
+            } else if (chatHistory.length === 2 && tokens > 4096) {
                 return false;
             }
         } while (tokens > 4096);
@@ -249,15 +257,15 @@ export default class GPT {
         try {
             const stream = await this.openai.chat.completions.create({
                 model: this.model,
-                messages: openaiChatHistory,
+                messages: chatHistory,
                 stream: true,
             });
 
-            return { message: "", openaiChatHistory, stream };
+            return { message: "", updatedChatHistory: chatHistory, stream };
         } catch (error) {
             console.error(error);
             const message = `Sorry, I couldn't generate a response at the moment. \`\`\`${error}\`\`\``
-            return { message, openaiChatHistory, stream: null };
+            return { message, updatedChatHistory: chatHistory, stream: null };
         }
     }
     /**

@@ -4,7 +4,7 @@ import '../styles/Chat.css';
 import GPT from '../utils/GPT.js';
 import TextareaAutosize from 'react-textarea-autosize';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faTrash, faStop, faExclamationCircle, faFileCircleXmark, faFileCircleMinus, faFileCirclePlus } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faTrash, faStop, faFileExport, faFileCircleXmark, faFileCircleMinus, faFileCirclePlus } from '@fortawesome/free-solid-svg-icons';
 
 
 export default function Chat(props) {
@@ -87,26 +87,109 @@ export default function Chat(props) {
     }, []);
 
     /**
+     * Handle regenerating an AI response
+     * @param {number} messageKey - The key of the message to regenerate
+     */
+    const handleRegenerate = async (messageKey) => {
+        // Find the preceding user message
+        let userMessageIndex = -1;
+        for (let i = messageKey - 1; i >= 0; i--) {
+            // Access the component's props directly from chatHistory
+            if (!chatHistory[i].props.isBot) {
+                userMessageIndex = i;
+                break;
+            }
+        }
+
+        if (userMessageIndex === -1) return; // No user message found
+
+        // Get the user message text
+        const userText = chatHistory[userMessageIndex].props.text;
+
+        // Remove all messages after and including the messageKey
+        setChatHistory(chatHistory.slice(0, messageKey));
+
+        // Keep openAI history up to userMessageIndex
+        const newOpenAIHistory = openaiChatHistory.slice(0, userMessageIndex * 2 + 1);
+        setOpenaiChatHistory(newOpenAIHistory);
+
+        // Re-send the user message
+        setIsGenerating(true);
+
+        const pageContext = usePageText !== "x" ? pageText : "";
+        const useFunctionCalling = usePageText === "+";
+
+        if (useFunctionCalling) {
+            addLoadingChatBox();
+        }
+
+        const { message, updatedChatHistory, stream } = await gptUtils.current.fetchChatCompletions(
+            newOpenAIHistory,
+            pageContext,
+            props.pageNumber,
+            userText,
+            useFunctionCalling,
+            addPageCallChatBox
+        );
+
+        setOpenaiChatHistory(updatedChatHistory);
+
+        setChatHistory(prevChatHistory => prevChatHistory.concat(
+            <Message
+                isBot={true}
+                stream={stream}
+                text={message}
+                openaiChatHistory={updatedChatHistory}
+                setOpenaiChatHistory={setOpenaiChatHistory}
+                setIsGenerating={setIsGenerating}
+                scrollToBottom={scrollToBottom}
+                messageKey={prevChatHistory.length}
+                model={model}
+                onRegenerate={handleRegenerate}
+                onEdit={handleEdit}
+            />
+        ));
+    };
+
+    /**
+     * Handle editing a user message
+     * @param {number} messageKey - The key of the message to edit
+     * @param {string} messageText - The text of the message to edit
+     */
+    const handleEdit = (messageKey, messageText) => {
+        // Set the user message to the message being edited
+        setUserMessage(messageText);
+
+        // Remove all messages after and including the messageKey
+        setChatHistory(chatHistory.slice(0, messageKey));
+        setOpenaiChatHistory(openaiChatHistory.slice(0, messageKey));
+
+        // Focus the textarea
+        document.getElementById('userMessageTextarea').focus();
+    };
+
+    /**
      * Generate a summary of the page text
      */
     const handleGenerate = async () => {
         setIsGenerating(true);
         const { message, updatedChatHistory, stream } = await gptUtils.current.generateSummary(pageText);
 
-        setOpenaiChatHistory(openaiChatHistory.concat(updatedChatHistory));
+        setOpenaiChatHistory(updatedChatHistory);
 
         setChatHistory(chatHistory.concat(<Message
             isBot={true}
             stream={stream}
             text={message}
-            openaiChatHistory={openaiChatHistory}
+            openaiChatHistory={updatedChatHistory}
             setOpenaiChatHistory={setOpenaiChatHistory}
             setIsGenerating={setIsGenerating}
             scrollToBottom={scrollToBottom}
             messageKey={chatHistory.length}
             model={model}
+            onEdit={handleEdit}
+            onRegenerate={handleRegenerate}
         />));
-
     };
 
     /**
@@ -121,6 +204,8 @@ export default function Chat(props) {
                 messageKey={chatHistory.length}
                 thought={true}
                 model={model}
+                onEdit={handleEdit}
+                onRegenerate={handleRegenerate}
             />
         ));
     }
@@ -139,6 +224,8 @@ export default function Chat(props) {
                 messageKey={chatHistory.length}
                 thought={true}
                 model={model}
+                onEdit={handleEdit}
+                onRegenerate={handleRegenerate}
             />
         ));
     }
@@ -147,9 +234,6 @@ export default function Chat(props) {
      * Handle sending a message to the chat
      */
     const handleSendMessage = async () => {
-        // TODO: Send message to chat history
-        // if there is no chat history, add the pdf page as context
-
         if (userMessage === "\n") return;
 
         const userText = userMessage;
@@ -163,6 +247,8 @@ export default function Chat(props) {
                 scrollToBottom={scrollToBottom}
                 messageKey={chatHistory.length}
                 model={model}
+                onEdit={handleEdit}
+                onRegenerate={handleRegenerate}
             />
         ));
 
@@ -176,7 +262,14 @@ export default function Chat(props) {
             addLoadingChatBox();
         }
 
-        const { message, updatedChatHistory, stream } = await gptUtils.current.fetchChatCompletions(openaiChatHistory, pageContext, props.pageNumber, userText, useFunctionCalling, addPageCallChatBox);
+        const { message, updatedChatHistory, stream } = await gptUtils.current.fetchChatCompletions(
+            openaiChatHistory,
+            pageContext,
+            props.pageNumber,
+            userText,
+            useFunctionCalling,
+            addPageCallChatBox
+        );
 
         setOpenaiChatHistory(updatedChatHistory);
 
@@ -185,12 +278,14 @@ export default function Chat(props) {
                 isBot={true}
                 stream={stream}
                 text={message}
-                openaiChatHistory={openaiChatHistory}
+                openaiChatHistory={updatedChatHistory}
                 setOpenaiChatHistory={setOpenaiChatHistory}
                 setIsGenerating={setIsGenerating}
                 scrollToBottom={scrollToBottom}
                 messageKey={chatHistory.length}
                 model={model}
+                onEdit={handleEdit}
+                onRegenerate={handleRegenerate}
             />
         ]));
     };
@@ -216,10 +311,51 @@ export default function Chat(props) {
 
         // Commenting out the forced scroll to bottom
         // // Force scroll to bottom when page text changes, regardless of isAtBottom
+        // // Force scroll to bottom when page text changes, regardless of isAtBottom
         // if (messageRef.current) {
         //     messageRef.current.scrollTop = messageRef.current.scrollHeight;
         // }
     }, [props.text, props.scrollRef]);
+
+    /**
+     * Convert the chat history to Markdown format
+     * @returns {string} Markdown representation of the chat
+     */
+    const convertChatToMarkdown = () => {
+        let markdown = `# Chat Export - ${new Date().toLocaleString()}\n\n`;
+
+        openaiChatHistory.forEach(message => {
+            const sender = message.role === "assistant" ? `**AI (${model})**` : "**User**";
+            const text = message.content;
+
+            markdown += `${sender}:\n\n${text}\n\n---\n\n`;
+        });
+
+        return markdown;
+    };
+
+    /**
+     * Download the chat history as a Markdown file
+     */
+    const handleDownloadChat = () => {
+        if (openaiChatHistory.length === 0) return;
+
+        const markdown = convertChatToMarkdown();
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+
+        a.href = url;
+        a.download = `chat-export-${new Date().toISOString().slice(0, 10)}.md`;
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        handleIconClick('download');
+    };
 
     /**
      * Shows a loading message while the page is loading
@@ -234,7 +370,6 @@ export default function Chat(props) {
     return (
         <div className="chat">
             <div className="top-chat-elements">
-
                 <button
                     className="generate"
                     id="hoverable"
@@ -242,6 +377,16 @@ export default function Chat(props) {
                     onClick={handleGenerate}
                 >
                     Summarise
+                </button>
+
+                <button
+                    className="download"
+                    id="hoverable"
+                    disabled={openaiChatHistory.length === 0}
+                    onClick={handleDownloadChat}
+                    title="Download chat as Markdown"
+                >
+                    <FontAwesomeIcon icon={faFileExport} />
                 </button>
             </div>
             <div className="messages" ref={messageRef}>

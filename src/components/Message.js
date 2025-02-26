@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import MarkdownRender from '../utils/MarkdownRender.js';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronRight, faCopy, faGear } from "@fortawesome/free-solid-svg-icons";
+import { faChevronRight, faCopy, faGear, faRedo, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 
 /**
  * Message component that renders both user and AI messages with markdown and LaTeX support
@@ -16,6 +16,8 @@ import { faChevronRight, faCopy, faGear } from "@fortawesome/free-solid-svg-icon
  * @param {Function} props.setOpenaiChatHistory - Setter function to update the chat history
  * @param {string} props.messageKey - React key prop for the message component
  * @param {string} props.model - The model to be used for generating responses.
+ * @param {Function} props.onEdit - Function to edit a message
+ * @param {Function} props.onRegenerate - Function to regenerate an AI response
  * @returns {JSX.Element} Message component
  */
 export default function Message(props) {
@@ -132,12 +134,38 @@ export default function Message(props) {
         <div className={props.isBot ? "bot-message-container" : "user-message-container"}>
             <div className={props.isBot ? "bot-message" : "user-message"} id={props.thought ? "thought" : "message"}>
                 {!props.thought && <div className="author">
-                    {props.isBot ? "AI ✨" : "User"}
-                    {props.isBot && (
-                        <button className="copy-button" onClick={() => navigator.clipboard.writeText(didThink ? responseText : textContent)}>
-                            Copy <FontAwesomeIcon icon={faCopy} />
+                    {!props.isBot && (
+                        <button
+                            className="user-action-button"
+                            title="Edit message"
+                            onClick={() => props.onEdit && props.onEdit(props.messageKey, textContent)}
+                        >
+                            <FontAwesomeIcon icon={faPencilAlt} />
                         </button>
                     )}
+
+                    {props.isBot ? "AI ✨" : "User"}
+
+                    <div className="message-actions">
+                        {props.isBot && (
+                            <button
+                                className="action-button"
+                                onClick={() => navigator.clipboard.writeText(didThink ? responseText : textContent)}
+                            >
+                                Copy <FontAwesomeIcon icon={faCopy} />
+                            </button>
+                        )}
+
+                        {props.isBot && !props.thought && (
+                            <button
+                                className="action-button"
+                                title="Regenerate response"
+                                onClick={() => props.onRegenerate && props.onRegenerate(props.messageKey)}
+                            >
+                                <FontAwesomeIcon icon={faRedo} />
+                            </button>
+                        )}
+                    </div>
                 </div>}
 
                 {props.isBot && didThink && (
