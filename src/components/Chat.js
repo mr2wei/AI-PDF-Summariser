@@ -4,7 +4,7 @@ import '../styles/Chat.css';
 import GPT from '../utils/GPT.js';
 import TextareaAutosize from 'react-textarea-autosize';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faTrash, faStop, faFileExport, faFileCircleXmark, faFileCircleMinus, faFileCirclePlus } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faTrash, faStop, faFileExport, faFileCircleXmark, faFileCircleMinus, faFileCirclePlus, faSave, faFolderOpen, faImage } from '@fortawesome/free-solid-svg-icons';
 
 
 export default function Chat(props) {
@@ -18,9 +18,12 @@ export default function Chat(props) {
     const [usePageText, setUsePageText] = useState("-"); // whether to use the page text as context. "-" means use current page as context, "+" means use multiple pages as context, "x" means don't use page text as context
     const [animatingButton, setAnimatingButton] = useState(null); // the button that is currently animating
     const [loading, setLoading] = useState(true); // whether the page is currently loading (initialising the GPT object)
-    const [isAtBottom, setIsAtBottom] = useState(true); // track if user is at bottom of chat
+    const [savedChats, setSavedChats] = useState([]); // list of saved chats
+    const [showSavedChats, setShowSavedChats] = useState(false); // whether to show the saved chats dropdown
+    const [activeChatId, setActiveChatId] = useState(null); // ID of the currently active saved chat
+    const [previousModel, setPreviousModel] = useState(""); // the model previously used before context was changed
 
-    const pageContextCycles = ["-", "+", "x"]; // the possible values for usePageText
+    const pageContextCycles = ["-", "+", "x", "i"]; // the possible values for usePageText
 
     const messageRef = useRef(null); // reference to the message container div. Used to scroll to the bottom of the chat
     const gptUtils = useRef(null); // reference to the GPT object
@@ -42,7 +45,12 @@ export default function Chat(props) {
     useEffect(() => {
         // if the current pageContextCycle is +, set the model to meta-llama/Llama-3.3-70B-Instruct-Turbo
         if (usePageText === "+") {
+            setPreviousModel(model);
             setModel("meta-llama/Llama-3.3-70B-Instruct-Turbo");
+        }
+        if (usePageText === "i") {
+            setPreviousModel(model);
+            setModel("Qwen/Qwen2-VL-72B-Instruct");
         }
     }, [usePageText]);
 
@@ -51,40 +59,59 @@ export default function Chat(props) {
         if (usePageText === "+" && model !== "meta-llama/Llama-3.3-70B-Instruct-Turbo") {
             setUsePageText("-");
         }
+        if (usePageText === "i" && model !== "Qwen/Qwen2-VL-72B-Instruct") {
+            setUsePageText("-");
+        }
     }, [model]);
+
+    useEffect(() => {
+        // Load saved chats from localStorage on component mount
+        const loadedChats = localStorage.getItem('savedChats');
+        if (loadedChats) {
+            setSavedChats(JSON.parse(loadedChats));
+        }
+    }, []);
+
+    useEffect(() => {
+        if (props.scrollRef && props.scrollRef.current) {
+            props.scrollRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+        setPageText(props.text);
+    }, [props.text, props.scrollRef]);
+
+    const getActiveChatName = () => {
+        if (!activeChatId) return null;
+        const activeChat = savedChats.find(chat => chat.id === activeChatId);
+        return activeChat ? activeChat.name : null;
+    };
+
+    const clearChat = () => {
+        setChatHistory([]);
+        setOpenaiChatHistory([]);
+        setIsGenerating(false);
+        setActiveChatId(null); // Clear the active chat
+    };
+
+    if (loading) {
+        return (
+            <div>Loading</div>
+        );
+    }
 
     /**
      * Scroll to the bottom of the chat only if user was already near the bottom
      */
     const scrollToBottom = () => {
-        if (messageRef.current && isAtBottom) {
-            messageRef.current.scrollTop = messageRef.current.scrollHeight;
-        }
-    };
-
-    /**
-     * Check if the user is currently near the bottom of the chat
-     */
-    const checkIfAtBottom = () => {
         if (messageRef.current) {
-            // console.log("checking if at bottom");
+            // Check if user is at bottom directly when function is called
             const { scrollTop, scrollHeight, clientHeight } = messageRef.current;
-            // Consider "at bottom" if user is within 30px of the bottom
-            const atBottom = scrollHeight - scrollTop - clientHeight < 30;
-            setIsAtBottom(atBottom);
+            const atBottom = scrollHeight - scrollTop - clientHeight < 50;
+
+            if (atBottom) {
+                messageRef.current.scrollTop = messageRef.current.scrollHeight;
+            }
         }
     };
-
-    // Setup scroll event listener
-    useEffect(() => {
-        const messagesContainer = messageRef.current;
-        if (messagesContainer) {
-            messagesContainer.addEventListener('scroll', checkIfAtBottom);
-            return () => {
-                messagesContainer.removeEventListener('scroll', checkIfAtBottom);
-            };
-        }
-    }, []);
 
     /**
      * Handle regenerating an AI response
@@ -118,7 +145,7 @@ export default function Chat(props) {
 
         const pageContext = usePageText !== "x" ? pageText : "";
         const useFunctionCalling = usePageText === "+";
-
+        const useImage = usePageText === "i";
         if (useFunctionCalling) {
             addLoadingChatBox();
         }
@@ -129,7 +156,9 @@ export default function Chat(props) {
             props.pageNumber,
             userText,
             useFunctionCalling,
-            addPageCallChatBox
+            addPageCallChatBox,
+            useImage,
+            useImage ? props.pageImage : null
         );
 
         setOpenaiChatHistory(updatedChatHistory);
@@ -257,37 +286,56 @@ export default function Chat(props) {
         setIsGenerating(true);
 
         const useFunctionCalling = usePageText === "+";
+        const useImage = usePageText === "i";
 
         if (useFunctionCalling) {
             addLoadingChatBox();
         }
 
-        const { message, updatedChatHistory, stream } = await gptUtils.current.fetchChatCompletions(
-            openaiChatHistory,
-            pageContext,
-            props.pageNumber,
-            userText,
-            useFunctionCalling,
-            addPageCallChatBox
-        );
+        try {
+            const { message, updatedChatHistory, stream } = await gptUtils.current.fetchChatCompletions(
+                openaiChatHistory,
+                pageContext,
+                props.pageNumber,
+                userText,
+                useFunctionCalling,
+                addPageCallChatBox,
+                useImage,
+                useImage ? props.pageImage : null
+            );
 
-        setOpenaiChatHistory(updatedChatHistory);
+            setOpenaiChatHistory(updatedChatHistory);
 
-        setChatHistory(prevChatHistory => prevChatHistory.concat([
-            <Message
-                isBot={true}
-                stream={stream}
-                text={message}
-                openaiChatHistory={updatedChatHistory}
-                setOpenaiChatHistory={setOpenaiChatHistory}
-                setIsGenerating={setIsGenerating}
-                scrollToBottom={scrollToBottom}
-                messageKey={chatHistory.length}
-                model={model}
-                onEdit={handleEdit}
-                onRegenerate={handleRegenerate}
-            />
-        ]));
+            setChatHistory(prevChatHistory => prevChatHistory.concat([
+                <Message
+                    isBot={true}
+                    stream={stream}
+                    text={message}
+                    openaiChatHistory={updatedChatHistory}
+                    setOpenaiChatHistory={setOpenaiChatHistory}
+                    setIsGenerating={setIsGenerating}
+                    scrollToBottom={scrollToBottom}
+                    messageKey={chatHistory.length}
+                    model={model}
+                    onEdit={handleEdit}
+                    onRegenerate={handleRegenerate}
+                />
+            ]));
+        } catch (error) {
+            console.error("Error in chat completion:", error);
+            setChatHistory(prevChatHistory => prevChatHistory.concat([
+                <Message
+                    isBot={true}
+                    text={"Sorry, an error occurred while processing your request. Please try again."}
+                    scrollToBottom={scrollToBottom}
+                    messageKey={chatHistory.length}
+                    model={model}
+                    onEdit={handleEdit}
+                    onRegenerate={handleRegenerate}
+                />
+            ]));
+            setIsGenerating(false);
+        }
     };
 
     /**
@@ -301,23 +349,6 @@ export default function Chat(props) {
     };
 
     /**
-     * Scroll to the bottom of the chat when the page text changes
-     */
-    useEffect(() => {
-        if (props.scrollRef && props.scrollRef.current) {
-            props.scrollRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-        setPageText(props.text);
-
-        // Commenting out the forced scroll to bottom
-        // // Force scroll to bottom when page text changes, regardless of isAtBottom
-        // // Force scroll to bottom when page text changes, regardless of isAtBottom
-        // if (messageRef.current) {
-        //     messageRef.current.scrollTop = messageRef.current.scrollHeight;
-        // }
-    }, [props.text, props.scrollRef]);
-
-    /**
      * Convert the chat history to Markdown format
      * @returns {string} Markdown representation of the chat
      */
@@ -326,7 +357,11 @@ export default function Chat(props) {
 
         openaiChatHistory.forEach(message => {
             const sender = message.role === "assistant" ? `**AI (${model})**` : "**User**";
-            const text = message.content;
+            let text = message.content;
+
+            // Replace <think> tags with <details> tags and add summary
+            text = text.replace(/<think>/g, '<details>\n<summary>Reasoning</summary>\n\n');
+            text = text.replace(/<\/think>/g, '\n</details>');
 
             markdown += `${sender}:\n\n${text}\n\n---\n\n`;
         });
@@ -358,14 +393,126 @@ export default function Chat(props) {
     };
 
     /**
-     * Shows a loading message while the page is loading
+     * Save the current chat to localStorage
      */
-    if (loading) {
-        return (
-            <div>Loading</div>
-        );
-    }
+    const saveCurrentChat = () => {
+        if (openaiChatHistory.length === 0) return;
 
+        // If updating an existing chat
+        if (activeChatId) {
+            const existingChat = savedChats.find(chat => chat.id === activeChatId);
+            if (existingChat && window.confirm(`Update existing chat "${existingChat.name}"?`)) {
+                const updatedChat = {
+                    ...existingChat,
+                    openaiChatHistory: openaiChatHistory,
+                    model: model,
+                    date: new Date().toISOString(),
+                    fileInfo: props.file ? { name: props.file.name } : null
+                };
+
+                const updatedSavedChats = savedChats.map(chat =>
+                    chat.id === activeChatId ? updatedChat : chat
+                );
+                setSavedChats(updatedSavedChats);
+                localStorage.setItem('savedChats', JSON.stringify(updatedSavedChats));
+                handleIconClick('save');
+                return;
+            }
+        }
+
+        // Create a new chat
+        const chatName = prompt('Enter a name for this chat:', `Chat ${new Date().toLocaleString()}`);
+        if (!chatName) return; // User canceled
+
+        const newChatId = Date.now();
+        const chatToSave = {
+            id: newChatId,
+            name: chatName,
+            date: new Date().toISOString(),
+            openaiChatHistory: openaiChatHistory,
+            model: model,
+            fileInfo: props.file ? { name: props.file.name } : null
+        };
+
+        const updatedSavedChats = [...savedChats, chatToSave];
+        setSavedChats(updatedSavedChats);
+        localStorage.setItem('savedChats', JSON.stringify(updatedSavedChats));
+        setActiveChatId(newChatId); // Set this as the active chat
+        handleIconClick('save');
+    };
+
+    /**
+     * Load a saved chat from localStorage
+     * @param {Object} savedChat - The saved chat to load
+     */
+    const loadSavedChat = (savedChat) => {
+        if (!window.confirm(`Load chat "${savedChat.name}"? Current chat will be replaced.`)) return;
+
+        setOpenaiChatHistory(savedChat.openaiChatHistory);
+
+        // Recreate Message components from saved history
+        const newChatHistory = [];
+        let messageIndex = 0;
+
+        // Skip system message (index 0) when recreating UI components
+        savedChat.openaiChatHistory.slice(1).forEach((msg) => {
+            // Skip messages with image content when recreating the UI
+            // Check if content is an array and contains image data
+            if (Array.isArray(msg.content) && msg.content.some(item => item.type === 'image_url')) {
+                // For image messages, create a simple text message noting the image was in the conversation
+                if (msg.role === 'user') {
+                    newChatHistory.push(
+                        <Message
+                            isBot={false}
+                            text="[Image shared with AI]"
+                            scrollToBottom={scrollToBottom}
+                            messageKey={messageIndex++}
+                            model={savedChat.model || model}
+                            onEdit={handleEdit}
+                            onRegenerate={handleRegenerate}
+                        />
+                    );
+                }
+            } else {
+                // For normal text messages
+                newChatHistory.push(
+                    <Message
+                        isBot={msg.role === 'assistant'}
+                        text={typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)}
+                        scrollToBottom={scrollToBottom}
+                        messageKey={messageIndex++}
+                        model={savedChat.model || model}
+                        onEdit={handleEdit}
+                        onRegenerate={handleRegenerate}
+                    />
+                );
+            }
+        });
+
+        setChatHistory(newChatHistory);
+        if (savedChat.model && supportedModels.current.includes(savedChat.model)) {
+            setModel(savedChat.model);
+            gptUtils.current.setModel(savedChat.model);
+        }
+
+        setActiveChatId(savedChat.id); // Set this as the active chat
+        setShowSavedChats(false);
+    };
+
+    /**
+     * Delete a saved chat
+     * @param {Object} chatToDelete - The chat to delete
+     * @param {Event} e - The event object
+     */
+    const deleteSavedChat = (chatToDelete, e) => {
+        e.stopPropagation(); // Prevent triggering the parent click (loading the chat)
+
+        if (!window.confirm(`Delete chat "${chatToDelete.name}"?`)) return;
+
+        const updatedSavedChats = savedChats.filter(chat => chat.id !== chatToDelete.id);
+        setSavedChats(updatedSavedChats);
+        localStorage.setItem('savedChats', JSON.stringify(updatedSavedChats));
+    };
 
     return (
         <div className="chat">
@@ -388,6 +535,53 @@ export default function Chat(props) {
                 >
                     <FontAwesomeIcon icon={faFileExport} />
                 </button>
+
+                <button
+                    className="save"
+                    id="hoverable"
+                    disabled={openaiChatHistory.length === 0}
+                    onClick={saveCurrentChat}
+                    title="Save chat"
+                >
+                    <FontAwesomeIcon icon={faSave} className={animatingButton === 'save' ? 'pulse-animation' : ''} />
+                </button>
+
+                <div className="saved-chats-container">
+                    <button
+                        className="load"
+                        id="hoverable"
+                        disabled={savedChats.length === 0}
+                        onClick={() => setShowSavedChats(!showSavedChats)}
+                        title="Load saved chat"
+                    >
+                        <FontAwesomeIcon icon={faFolderOpen} className={animatingButton === 'load' ? 'pulse-animation' : ''} />
+                    </button>
+
+                    {showSavedChats && savedChats.length > 0 && (
+                        <div className="saved-chats-dropdown">
+                            {savedChats.map(chat => (
+                                <div
+                                    key={chat.id}
+                                    className="saved-chat-item"
+                                    onClick={() => loadSavedChat(chat)}
+                                >
+                                    <div className="saved-chat-details">
+                                        <div className="saved-chat-name">{chat.name}</div>
+                                        <div className="saved-chat-date">{new Date(chat.date).toLocaleString()}</div>
+                                        {chat.fileInfo && <div className="saved-chat-file">{chat.fileInfo.name}</div>}
+                                    </div>
+                                    <button
+                                        className="delete-saved-chat"
+                                        onClick={(e) => deleteSavedChat(chat, e)}
+                                        title="Delete this saved chat"
+                                    >
+                                        <FontAwesomeIcon icon={faTrash} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
             <div className="messages" ref={messageRef}>
                 {chatHistory.map((message, index) => (
@@ -416,12 +610,12 @@ export default function Chat(props) {
                     disabled={!props.text || isGenerating}
                     onClick={() => {
                         handleIconClick('context');
-                        setUsePageText(pageContextCycles[(pageContextCycles.indexOf(usePageText) + 1) % 3]);
+                        setUsePageText(pageContextCycles[(pageContextCycles.indexOf(usePageText) + 1) % 4]);
                     }}
-                    title={usePageText === "-" ? "Use page text as context" : usePageText === "+" ? "Use multiple pages as context" : "Do not use page text as context"}
+                    title={usePageText === "-" ? "Use page text as context" : usePageText === "+" ? "Use multiple pages as context" : usePageText === "x" ? "Do not use page text as context" : "Use image as context"}
                 >
                     <FontAwesomeIcon
-                        icon={usePageText === "-" ? faFileCircleMinus : usePageText === "+" ? faFileCirclePlus : faFileCircleXmark}
+                        icon={usePageText === "-" ? faFileCircleMinus : usePageText === "+" ? faFileCirclePlus : usePageText === "x" ? faFileCircleXmark : faImage}
                         className={animatingButton === 'context' ? 'pulse-animation' : ''}
                     />
                 </button>
@@ -439,9 +633,7 @@ export default function Chat(props) {
                     disabled={chatHistory.length === 0}
                     onClick={() => {
                         handleIconClick('clear');
-                        setChatHistory([]);
-                        setOpenaiChatHistory([]);
-                        setIsGenerating(false);
+                        clearChat();
                     }}
                     title={isGenerating ? "Stop generating" : "Clear chat"}
                 >
@@ -449,6 +641,11 @@ export default function Chat(props) {
                 </button>
             </div>
             <div className="additional-chat-elements">
+                {activeChatId && (
+                    <div className="alert">
+                        Working on: {getActiveChatName()}
+                    </div>
+                )}
                 <select
                     className="model-selector"
                     value={model}

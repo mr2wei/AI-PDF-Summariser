@@ -16,6 +16,7 @@ export default function PDFViewer(props) {
     const [showPDF, setShowPDF] = useState(true);
     const [currentSection, setCurrentSection] = useState("");
     const pdfRef = useRef(null);
+    const containerRef = useRef(null);
 
     useEffect(() => {
         pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
@@ -106,45 +107,58 @@ export default function PDFViewer(props) {
             console.error('Error extracting text:', error);
             props.setPageText('');
         });
+
+        // Capture page as image
+        setTimeout(() => {
+            if (containerRef.current) {
+                const canvas = containerRef.current.querySelector('canvas');
+                if (canvas) {
+                    const imageData = canvas.toDataURL('image/png');
+                    if (props.setPageImage) {
+                        props.setPageImage(imageData);
+                    }
+                }
+            }
+        }, 100); // Small delay to ensure canvas is fully rendered
     };
 
     const extractPageText = async (page) => {
         try {
             const textContent = await page.getTextContent();
-            
+
             // Group text items by their y-position to identify lines
             const textItems = textContent.items;
             const lines = {};
-            
+
             textItems.forEach(item => {
                 // Round the y-position to account for slight variations
                 const yPos = Math.round(item.transform[5]);
-                
+
                 if (!lines[yPos]) {
                     lines[yPos] = [];
                 }
-                
+
                 // Sort by x-position to maintain word order
                 lines[yPos].push({
                     text: item.str,
                     x: item.transform[4]
                 });
             });
-            
+
             // Sort lines by y-position (top to bottom)
             const sortedYPositions = Object.keys(lines).map(Number).sort((a, b) => b - a);
-            
+
             // Build the final text
             let extractedText = '';
             sortedYPositions.forEach(yPos => {
                 // Sort words in a line by x-position (left to right)
                 const lineItems = lines[yPos].sort((a, b) => a.x - b.x);
-                
+
                 // Join all words in this line
                 const lineText = lineItems.map(item => item.text).join(' ');
                 extractedText += lineText + '\n';
             });
-            
+
             return extractedText;
         } catch (error) {
             console.error('Error in text extraction:', error);
@@ -243,8 +257,8 @@ export default function PDFViewer(props) {
             </div>
             <div className={`pdf ${showPDF ? "" : "hidden"}`}>
                 <ReactResizeDetector handleWidth handleHeight>
-                    {({ width, height, targetRef }) => (
-                        <div ref={targetRef}>
+                    {({ width, height }) => (
+                        <div ref={containerRef}>
                             <Document file={props.file} onLoadSuccess={onDocumentLoadSuccess} ref={pdfRef}>
                                 <Page pageNumber={props.pageNumber} width={width} height={height} onLoadSuccess={onPageLoadSuccess} />
                             </Document>

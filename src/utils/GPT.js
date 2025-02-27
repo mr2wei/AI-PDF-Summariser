@@ -62,10 +62,22 @@ export default class GPT {
         let total_tokens = [];
         // Iterate over each message in the chat history.
         chatHistory.forEach((message) => {
-            // Encode the content of the message into tokens.
-            const tokens = encoder.encode(message.content);
-            // Concatenate the tokens into the total_tokens array.
-            total_tokens = total_tokens.concat(tokens);
+            // Handle different content types (string vs array)
+            if (typeof message.content === 'string') {
+                // Encode the content of the message into tokens.
+                const tokens = encoder.encode(message.content);
+                // Concatenate the tokens into the total_tokens array.
+                total_tokens = total_tokens.concat(tokens);
+            } else if (Array.isArray(message.content)) {
+                // For multimodal messages with content arrays
+                message.content.forEach(item => {
+                    if (item.type === 'text') {
+                        const tokens = encoder.encode(item.text);
+                        total_tokens = total_tokens.concat(tokens);
+                    }
+                    // Skip tokenizing image content
+                });
+            }
         });
 
         // Return the total number of tokens.
@@ -217,13 +229,77 @@ export default class GPT {
     }
 
     /**
+     * Handles chat completions when using the page as an image rather than text
+     * 
+     * @param {Array} openaiChatHistory The chat history to be used for generating the response
+     * @param {String} pageText The text from the page (not used in this mode)
+     * @param {Number} pageNumber The page number being viewed
+     * @param {String} userMessage The user's message
+     * @param {String} pageImage Base64 encoded image of the page
+     * @returns {Object} The response with message, updatedChatHistory, and stream
+     */
+    imageBasedFetchChatCompletions = async (openaiChatHistory, pageText, pageNumber, userMessage, pageImage) => {
+        // Create a deep copy of the chat history to avoid mutating the original
+        let chatHistory = JSON.parse(JSON.stringify(openaiChatHistory));
+
+        // Ensure we have a system message at the beginning
+        if (chatHistory.length === 0 || chatHistory[0].role !== 'system') {
+            chatHistory.unshift({ role: 'system', content: `${this.guidance}. The user is on page ${pageNumber} of ${this.file.numPages}. You can see an image of the PDF page.` });
+        }
+
+        // Create a message with the image
+        const messageWithImage = {
+            role: 'user',
+            content: [
+                {
+                    type: 'text',
+                    text: `Here is page ${pageNumber} of the PDF. My query: ${userMessage}`
+                },
+                {
+                    type: 'image_url',
+                    image_url: {
+                        url: pageImage
+                    }
+                }
+            ]
+        };
+
+        // Add the user message with image
+        chatHistory.push(messageWithImage);
+
+        try {
+            const response = await this.openai.chat.completions.create({
+                model: 'Qwen/Qwen2-VL-72B-Instruct',
+                messages: chatHistory,
+            });
+
+            // Ensure response content is always a string
+            const messageContent = typeof response.choices[0].message.content === 'string'
+                ? response.choices[0].message.content
+                : JSON.stringify(response.choices[0].message.content);
+
+            chatHistory.push({ role: 'assistant', content: messageContent });
+
+            return { message: messageContent, updatedChatHistory: chatHistory, stream: null };
+        } catch (error) {
+            console.error(error);
+            const message = `Sorry, I couldn't analyze the image at the moment. \`\`\`${error}\`\`\``
+            return { message, updatedChatHistory: chatHistory, stream: null };
+        }
+    }
+
+    /**
      * This function generates a response to the user's message.
      *  
      * @param {String} openaiChatHistory
      * 
      * @returns {Object} The response to the user's message, openaiChatHistory, and stream if available.
      */
-    fetchChatCompletions = async (openaiChatHistory, pageText, pageNumber, userMessage, useFunctionCalling, addPageCallChatBox) => {
+    fetchChatCompletions = async (openaiChatHistory, pageText, pageNumber, userMessage, useFunctionCalling, addPageCallChatBox, useImage = false, pageImage = null) => {
+        if (useImage && pageImage) {
+            return this.imageBasedFetchChatCompletions(openaiChatHistory, pageText, pageNumber, userMessage, pageImage);
+        }
+
         if (useFunctionCalling) {
             return this.smarterFetchChatCompletions(openaiChatHistory, pageText, pageNumber, userMessage, addPageCallChatBox);
         }
@@ -235,6 +311,13 @@ export default class GPT {
         if (chatHistory.length === 0 || chatHistory[0].role !== 'system') {
             chatHistory.unshift({ role: 'system', content: this.guidance });
         }
+
+        // Sanitize any potentially non-string content in chatHistory
+        chatHistory.forEach(msg => {
+            if (msg.content && typeof msg.content !== 'string') {
+                msg.content = JSON.stringify(msg.content);
+            }
+        });
 
         // Add the user message
         if (pageText) {
@@ -285,7 +368,8 @@ export default class GPT {
             "deepseek-ai/DeepSeek-V3",
             "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
             "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-            "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
+            "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+            "Qwen/Qwen2-VL-72B-Instruct"
         ];
     }
 
