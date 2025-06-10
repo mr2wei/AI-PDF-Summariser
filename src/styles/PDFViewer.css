@@ -156,3 +156,42 @@
 #hoverable {
     user-select: none;
 }
+
+.text-editor-panel {
+    position: absolute;
+    top: 75px;
+    right: 30px;
+    width: calc(100% - 80px);
+    max-height: 85%;
+    background-color: var(--overlay-color);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1000;
+    padding: 12px;
+    opacity: 0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.text-editor-panel.visible {
+    opacity: 1;
+    visibility: visible;
+    backdrop-filter: blur(40px);
+}
+
+.text-editor {
+    width: calc(100% - 18px);
+    height: 100%;
+    min-height: 300px;
+    padding: 8px;
+    font-size: 14px;
+    font-family: sans-serif;
+    line-height: 1.5;
+    border: 1px solid var(--text-color);
+    border-radius: 8px;
+    background-color: var(--container-highlight-color);
+    color: var(--text-color);
+    resize: none;
+}

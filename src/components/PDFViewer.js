@@ -2,10 +2,11 @@ import ReactResizeDetector from "react-resize-detector";
 import React, { useRef, useEffect, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faCaretRight, faCaretLeft } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faCaretRight, faCaretLeft, faEye, faEyeSlash, faPen } from '@fortawesome/free-solid-svg-icons';
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import '../styles/PDFViewer.css'
+import { createWorker } from 'tesseract.js';
 
 
 export default function PDFViewer(props) {
@@ -15,6 +16,11 @@ export default function PDFViewer(props) {
     const [showTableOfContents, setShowTableOfContents] = useState(false);
     const [showPDF, setShowPDF] = useState(true);
     const [currentSection, setCurrentSection] = useState("");
+    const [useOcr, setUseOcr] = useState(false);
+    const [isOcrProcessing, setIsOcrProcessing] = useState(false);
+    const [currentPage, setCurrentPage] = useState(null);
+    const [showTextEditor, setShowTextEditor] = useState(false);
+    const [editableText, setEditableText] = useState("");
     const pdfRef = useRef(null);
     const containerRef = useRef(null);
 
@@ -101,12 +107,32 @@ export default function PDFViewer(props) {
     };
 
     const onPageLoadSuccess = (page) => {
-        extractPageText(page).then(text => {
-            props.setPageText(text);
-        }).catch(error => {
-            console.error('Error extracting text:', error);
-            props.setPageText('');
-        });
+        setCurrentPage(page);
+
+        if (useOcr) {
+            // Delay OCR processing to ensure canvas is fully rendered
+            props.setPageText("");
+            setTimeout(() => {
+                extractTextWithOcr().then(text => {
+                    props.setPageText(text);
+                    setEditableText(text); // Initialize editable text with OCR result
+                    // console.log("OCR text:", text);
+                }).catch(error => {
+                    console.error('Error extracting text with OCR:', error);
+                    props.setPageText('');
+                    setEditableText('');
+                });
+            }, 200);
+        } else {
+            extractPageText(page).then(text => {
+                props.setPageText(text);
+                setEditableText(text); // Initialize editable text with extracted text
+            }).catch(error => {
+                console.error('Error extracting text:', error);
+                props.setPageText('');
+                setEditableText('');
+            });
+        }
 
         // Capture page as image
         setTimeout(() => {
@@ -166,6 +192,75 @@ export default function PDFViewer(props) {
         }
     };
 
+    const extractTextWithOcr = async () => {
+        setIsOcrProcessing(true);
+        try {
+            // Wait a bit longer to ensure canvas is fully rendered
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const canvas = containerRef.current.querySelector('canvas');
+            if (!canvas) {
+                throw new Error('Canvas not found');
+            }
+
+            const imageData = canvas.toDataURL('image/png');
+            // console.log("Captured image data length:", imageData.length);
+
+            // Log a portion of the image data to verify it's not empty
+            // console.log("Image data preview:", imageData.substring(0, 100) + "...");
+
+            // Initialize Tesseract worker with simplified API for v3
+            const worker = await createWorker('eng');
+
+            // Recognize text with additional options for better results
+            const { data } = await worker.recognize(imageData, {
+                tesseract: {
+                    // Improve OCR quality with additional configuration
+                    preserve_interword_spaces: 1,
+                    tessjs_create_pdf: 0
+                }
+            });
+
+            await worker.terminate();
+
+            // console.log("OCR text:", data.text);
+            setIsOcrProcessing(false);
+            return data.text;
+        } catch (error) {
+            setIsOcrProcessing(false);
+            console.error('OCR error:', error);
+            return '';
+        }
+    };
+
+    const toggleOcr = () => {
+        const newOcrState = !useOcr;
+        setUseOcr(newOcrState);
+
+        // Reprocess current page with new OCR setting
+        if (newOcrState) {
+            extractTextWithOcr().then(text => {
+                props.setPageText(text);
+                setEditableText(text); // Update editable text with OCR result
+                console.log("OCR text:", text);
+            }).catch(error => {
+                console.error('Error extracting text with OCR:', error);
+                props.setPageText('');
+                setEditableText('');
+            });
+        } else if (currentPage) {
+            // Use the stored currentPage instead of trying to get it from the ref
+            extractPageText(currentPage).then(text => {
+                props.setPageText(text);
+                setEditableText(text); // Update editable text with extracted text
+            }).catch(error => {
+                console.error('Error extracting text:', error);
+                props.setPageText('');
+                setEditableText('');
+            });
+        }
+    };
+
     const goToPreviousPage = (event) => {
         event.preventDefault();
         if (props.pageNumber > 1) {
@@ -203,6 +298,49 @@ export default function PDFViewer(props) {
         getCurrentSection();
     }, [props.pageNumber]);
 
+    const handleTextEdit = (e) => {
+        const newText = e.target.value;
+        setEditableText(newText);
+        props.setPageText(newText);
+    };
+
+    // Add this function to force re-render of the editor with current text
+    const ensureTextIsSet = () => {
+        if (showTextEditor) {
+            const currentText = props.pageText || "";
+            // Force a state update by making a copy of the text
+            setEditableText(currentText + "");
+            // console.log("Ensuring text is set:", currentText);
+        }
+    };
+
+    // Call this function when editor is opened
+    const toggleTextEditor = () => {
+        const newState = !showTextEditor;
+        setShowTextEditor(newState);
+
+        // If opening the editor, make sure to set the text
+        if (newState) {
+            setTimeout(() => {
+                ensureTextIsSet();
+            }, 100);
+        }
+    };
+
+    // Update this useEffect to make sure text is properly set
+    useEffect(() => {
+        if (props.pageText && showTextEditor) {
+            // Create a new string to ensure state update is triggered
+            setEditableText(String(props.pageText));
+            console.log("Setting editable text from pageText:", props.pageText);
+        }
+    }, [props.pageText, showTextEditor]);
+
+    // Add a console log to debug
+    // useEffect(() => {
+    //     // console.log("editableText updated:", editableText);
+    // }, [editableText]);
+
     return (
         <div className="pdf-container">
             <div className="pdf-controls">
@@ -236,8 +374,46 @@ export default function PDFViewer(props) {
                     <FontAwesomeIcon icon={faCaretRight} />
                 </button>
 
+                <button
+                    className={`page-control ${useOcr ? 'active' : ''}`}
+                    id="hoverable"
+                    onClick={toggleOcr}
+                    title={useOcr ? "Disable OCR" : "Enable OCR for image-based text"}
+                    disabled={isOcrProcessing}
+                >
+                    <FontAwesomeIcon icon={useOcr ? faEye : faEyeSlash} />
+                    {/* {isOcrProcessing && <span className="ocr-processing"> ...</span>} */}
+                </button>
+
+                {/* Text Editor Button */}
+                <button
+                    className={`page-control ${showTextEditor ? 'active' : ''}`}
+                    id="hoverable"
+                    onClick={toggleTextEditor}
+                    title="Edit Page Text"
+                >
+                    <FontAwesomeIcon icon={faPen} />
+                </button>
+
                 <div className="control-padding"></div>
             </div>
+
+            {/* Text Editor Panel */}
+            <div className={`text-editor-panel ${showTextEditor ? "visible" : ""}`}>
+                <textarea
+                    className="text-editor"
+                    value={editableText || ""}
+                    onChange={handleTextEdit}
+                    placeholder="Edit page text here..."
+                    rows={15}
+                />
+                {/* Debug display to verify text content */}
+                <div style={{ display: 'none' }}>
+                    Text length: {editableText ? editableText.length : 0}
+                    First 10 chars: {editableText ? editableText.substring(0, 10) : "none"}
+                </div>
+            </div>
+
             <div className={`table-of-contents ${showTableOfContents ? "visible" : ""}`}>
                 <div className="toc-container">
                     {outline.map((item, index) => {

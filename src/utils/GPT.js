@@ -269,7 +269,7 @@ export default class GPT {
 
         try {
             const response = await this.openai.chat.completions.create({
-                model: 'Qwen/Qwen2-VL-72B-Instruct',
+                model: 'meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8',
                 messages: chatHistory,
             });
 
@@ -369,7 +369,7 @@ export default class GPT {
             "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
             "meta-llama/Llama-3.3-70B-Instruct-Turbo",
             "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
-            "Qwen/Qwen2-VL-72B-Instruct"
+            "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
         ];
     }
 

@@ -50,7 +50,7 @@ export default function Chat(props) {
         }
         if (usePageText === "i") {
             setPreviousModel(model);
-            setModel("Qwen/Qwen2-VL-72B-Instruct");
+            setModel("meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8");
         }
     }, [usePageText]);
 
@@ -59,7 +59,7 @@ export default function Chat(props) {
         if (usePageText === "+" && model !== "meta-llama/Llama-3.3-70B-Instruct-Turbo") {
             setUsePageText("-");
         }
-        if (usePageText === "i" && model !== "Qwen/Qwen2-VL-72B-Instruct") {
+        if (usePageText === "i" && model !== "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8") {
             setUsePageText("-");
         }
     }, [model]);
